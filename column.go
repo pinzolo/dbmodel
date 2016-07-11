@@ -35,12 +35,12 @@ func (c Column) DefaultValue() string {
 }
 
 // NewColumn returns new Column initialized with arguments.
-func NewColumn(name string, dataType string, size Size, nullable string, defaultValue string) Column {
+func NewColumn(name string, dataType string, size Size, nullable bool, defaultValue string) Column {
 	return Column{
 		name:         name,
 		dataType:     dataType,
 		size:         size,
-		nullable:     nullable == "YES",
+		nullable:     nullable,
 		defaultValue: defaultValue,
 	}
 }
