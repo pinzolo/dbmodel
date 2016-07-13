@@ -7,12 +7,17 @@ type Table struct {
 	columns []*Column
 }
 
-// Name returns table name
+// Name returns table name.
 func (t Table) Name() string {
 	return t.name
 }
 
-// Columns returns having columns
+// Comment returns table comment.
+func (t Table) Comment() string {
+	return t.comment
+}
+
+// Columns returns having columns.
 func (t Table) Columns() []*Column {
 	return t.columns
 }

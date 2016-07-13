@@ -2,7 +2,6 @@ package dbmodel
 
 // DataSource is database setting.
 type DataSource struct {
-	Driver   string
 	Host     string
 	Port     int
 	User     string
@@ -12,9 +11,8 @@ type DataSource struct {
 }
 
 // NewDataSource returns new DataSource with initialized given arguments.
-func NewDataSource(driver string, host string, port int, user string, password string, database string, options map[string]string) DataSource {
+func NewDataSource(host string, port int, user string, password string, database string, options map[string]string) DataSource {
 	return DataSource{
-		Driver:   driver,
 		Host:     host,
 		Port:     port,
 		User:     user,
