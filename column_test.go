@@ -1,8 +1,6 @@
 package dbmodel
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestNewColumn(t *testing.T) {
 	c := NewColumn("name", "TEXT", NewSize(validInt(9), invalidInt(), invalidInt()), true, "Jone Doe")
