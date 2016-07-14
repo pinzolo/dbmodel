@@ -125,6 +125,34 @@ func TestTableNamesNoResult(t *testing.T) {
 	}
 }
 
+func TestAllTableNamesWithoutSchema(t *testing.T) {
+	c := createPgClient()
+	defer c.Disconnect()
+	c.Connect()
+
+	_, err := c.AllTableNames("")
+	if err == nil {
+		t.Errorf("Client should raise error when empty schema given.")
+	}
+	if err != ErrSchemaEmpty {
+		t.Errorf("%v is invalid Error", err)
+	}
+}
+
+func TestTableNamesWithoutSchema(t *testing.T) {
+	c := createPgClient()
+	defer c.Disconnect()
+	c.Connect()
+
+	_, err := c.TableNames("", "region")
+	if err == nil {
+		t.Errorf("Client should raise error when empty schema given.")
+	}
+	if err != ErrSchemaEmpty {
+		t.Errorf("%v is invalid Error", err)
+	}
+}
+
 func createPgTestDB() error {
 	db, err := sql.Open("postgres", "host=localhost user=postgres sslmode=disable")
 	if err != nil {
@@ -141,6 +169,9 @@ func createPgTestDB() error {
 }
 
 func createPgClient() *Client {
-	ds := NewDataSource("localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
-	return NewClient("postgres", ds)
+	return NewClient("postgres", createPgDataSource())
+}
+
+func createPgDataSource() DataSource {
+	return NewDataSource("localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
 }
