@@ -12,21 +12,21 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	err := createPgTestResources()
+	err := createPostgresTestResources()
 	if err != nil {
 		panic(err)
 	}
 	code := m.Run()
 	defer os.Exit(code)
-	err = dropPgTestResources()
+	err = dropPostgresTestResources()
 	if err != nil {
 		fmt.Println(err)
 		code = 2
 	}
 }
 
-func createPgTestResources() error {
-	err := createPgTestDB()
+func createPostgresTestResources() error {
+	err := createPostgresTestDB()
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func createPgTestResources() error {
 	return nil
 }
 
-func createPgTestDB() error {
+func createPostgresTestDB() error {
 	db, err := sql.Open("postgres", "host=localhost user=postgres sslmode=disable")
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func createPgTestDB() error {
 	return nil
 }
 
-func dropPgTestResources() error {
+func dropPostgresTestResources() error {
 	db, err := sql.Open("postgres", "host=localhost user=postgres dbname=postgres sslmode=disable")
 	if err != nil {
 		return err

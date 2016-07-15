@@ -41,8 +41,8 @@ func TestPostgresDataSourceName(t *testing.T) {
 	}
 }
 
-func TestAllTableNames(t *testing.T) {
-	c := createPgClient()
+func TestPostgresAllTableNames(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -68,8 +68,8 @@ func TestAllTableNames(t *testing.T) {
 	}
 }
 
-func TestAllTableNamesOtherSchema(t *testing.T) {
-	c := createPgClient()
+func TestPostgresAllTableNamesOtherSchema(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -86,8 +86,8 @@ func TestAllTableNamesOtherSchema(t *testing.T) {
 	}
 }
 
-func TestTableNames(t *testing.T) {
-	c := createPgClient()
+func TestPostgresTableNames(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -107,8 +107,8 @@ func TestTableNames(t *testing.T) {
 	}
 }
 
-func TestTableNamesNoResult(t *testing.T) {
-	c := createPgClient()
+func TestPostgresTableNamesNoResult(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -122,8 +122,8 @@ func TestTableNamesNoResult(t *testing.T) {
 	}
 }
 
-func TestAllTableNamesWithoutSchema(t *testing.T) {
-	c := createPgClient()
+func TestPostgresAllTableNamesWithoutSchema(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -136,8 +136,8 @@ func TestAllTableNamesWithoutSchema(t *testing.T) {
 	}
 }
 
-func TestTableNamesWithoutSchema(t *testing.T) {
-	c := createPgClient()
+func TestPostgresTableNamesWithoutSchema(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -150,8 +150,8 @@ func TestTableNamesWithoutSchema(t *testing.T) {
 	}
 }
 
-func TestTableValid(t *testing.T) {
-	c := createPgClient()
+func TestPostgresTableValid(t *testing.T) {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
@@ -164,15 +164,15 @@ func TestTableValid(t *testing.T) {
 	}
 }
 
-func TestTableColumnsCount(t *testing.T) {
-	tbl := loadPgTable("production", "location")
+func TestPostgresTableColumnsCount(t *testing.T) {
+	tbl := loadPostgresTable("production", "location")
 	if len(tbl.Columns()) != 5 {
 		t.Errorf("Column count is invalid. expected: %v, actual: %v", 5, len(tbl.Columns()))
 	}
 }
 
-func TestTableColumnsOrder(t *testing.T) {
-	tbl := loadPgTable("production", "location")
+func TestPostgresTableColumnsOrder(t *testing.T) {
+	tbl := loadPostgresTable("production", "location")
 	if actual, expected := tbl.Columns()[0].Name(), "location_id"; actual != expected {
 		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
 	}
@@ -190,8 +190,8 @@ func TestTableColumnsOrder(t *testing.T) {
 	}
 }
 
-func TestTableColumnComment(t *testing.T) {
-	tbl := loadPgTable("production", "location")
+func TestPostgresTableColumnComment(t *testing.T) {
+	tbl := loadPostgresTable("production", "location")
 	if actual, expected := tbl.Columns()[0].Comment(), "Primary key for Location records."; actual != expected {
 		t.Errorf("Cannot get valid comment. expected: %v, actual: %v", expected, actual)
 	}
@@ -200,8 +200,8 @@ func TestTableColumnComment(t *testing.T) {
 	}
 }
 
-func TestTableColumnDataType(t *testing.T) {
-	tbl := loadPgTable("production", "location")
+func TestPostgresTableColumnDataType(t *testing.T) {
+	tbl := loadPostgresTable("production", "location")
 	if actual, expected := tbl.Columns()[0].DataType(), "int4"; actual != expected {
 		t.Errorf("Cannot get valid data type. expected: %v, actual: %v", expected, actual)
 	}
@@ -210,8 +210,8 @@ func TestTableColumnDataType(t *testing.T) {
 	}
 }
 
-func TestTableColumnSize(t *testing.T) {
-	tbl := loadPgTable("production", "location")
+func TestPostgresTableColumnSize(t *testing.T) {
+	tbl := loadPostgresTable("production", "location")
 	textSize := tbl.Columns()[1].Size()
 	if !textSize.IsValid() || !textSize.Length().Valid || textSize.Precision().Valid {
 		t.Error("Cannot get valid text size.")
@@ -245,8 +245,8 @@ func TestTableColumnSize(t *testing.T) {
 	}
 }
 
-func TestTableColumnNullable(t *testing.T) {
-	tbl := loadPgTable("sales", "currency")
+func TestPostgresTableColumnNullable(t *testing.T) {
+	tbl := loadPostgresTable("sales", "currency")
 	if tbl.Columns()[0].IsNullable() {
 		t.Errorf("Column '%v' is not nullable, but IsNullable() returns true", tbl.Columns()[0].Name())
 	}
@@ -255,8 +255,8 @@ func TestTableColumnNullable(t *testing.T) {
 	}
 }
 
-func TestTableColumnDefaultValue(t *testing.T) {
-	tbl := loadPgTable("production", "location")
+func TestPostgresTableColumnDefaultValue(t *testing.T) {
+	tbl := loadPostgresTable("production", "location")
 	if actual := tbl.Columns()[1].DefaultValue(); actual != "" {
 		t.Errorf("Column '%v' do not have default value, but DefaultValue() returns %v", tbl.Columns()[1].Name(), actual)
 	}
@@ -268,16 +268,16 @@ func TestTableColumnDefaultValue(t *testing.T) {
 	}
 }
 
-func createPgClient() *Client {
-	return NewClient("postgres", createPgDataSource())
+func createPostgresClient() *Client {
+	return NewClient("postgres", createPostgresDataSource())
 }
 
-func createPgDataSource() DataSource {
+func createPostgresDataSource() DataSource {
 	return NewDataSource("localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
 }
 
-func loadPgTable(schema string, name string) *Table {
-	c := createPgClient()
+func loadPostgresTable(schema string, name string) *Table {
+	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
