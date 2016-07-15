@@ -1,6 +1,9 @@
 package dbmodel
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPostgresDataSourceName(t *testing.T) {
 	p := postgres{}
@@ -157,10 +160,24 @@ func TestPostgresTableValid(t *testing.T) {
 
 	tbl, err := c.Table("production", "location")
 	if err != nil {
-		t.Errorf("Client should not raise error when valid schema and table name given.")
+		t.Error("Client should not raise error when valid schema and table name given.")
 	}
 	if tbl.Name() != "location" {
 		t.Errorf("Table name is invalid. expected: %v, actual: %v", "location", tbl.Name())
+	}
+}
+
+func TestPostgresTableNotFound(t *testing.T) {
+	c := createPostgresClient()
+	defer c.Disconnect()
+	c.Connect()
+
+	_, err := c.Table("production", "xxxxx")
+	if err == nil {
+		t.Error("Client should raise error when given table name not exist")
+	}
+	if !strings.Contains(err.Error(), "xxxxx") {
+		t.Error("Error message should contains given table name.")
 	}
 }
 
