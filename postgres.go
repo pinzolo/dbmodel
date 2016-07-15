@@ -17,12 +17,12 @@ func (p postgres) Connect(ds DataSource) (*sql.DB, error) {
 func (p postgres) AllTableNamesSQL() string {
 	return `
 SELECT t.tablename AS table_name
-     , d.description AS comment
+     , d.description AS table_comment
 FROM pg_catalog.pg_tables t
-LEFT JOIN pg_catalog.pg_class c1
+LEFT OUTER JOIN pg_catalog.pg_class c1
 ON c1.relname = t.tablename
-LEFT JOIN pg_catalog.pg_description d
-ON d.objoid = c1.oid
+LEFT OUTER JOIN pg_catalog.pg_description d
+ON  d.objoid = c1.oid
 AND d.objsubid = 0
 WHERE t.schemaname  = $1
 ORDER BY t.tablename`
@@ -31,16 +31,50 @@ ORDER BY t.tablename`
 func (p postgres) TableNamesSQL() string {
 	return `
 SELECT t.tablename AS table_name
-     , d.description AS comment
+     , d.description AS table_comment
 FROM pg_catalog.pg_tables t
-LEFT JOIN pg_catalog.pg_class c1
+LEFT OUTER JOIN pg_catalog.pg_class c1
 ON c1.relname = t.tablename
-LEFT JOIN pg_catalog.pg_description d
-ON d.objoid = c1.oid
+LEFT OUTER JOIN pg_catalog.pg_description d
+ON  d.objoid = c1.oid
 AND d.objsubid = 0
 WHERE t.schemaname  = $1
-AND t.tablename LIKE '%' || $2 || '%'
+AND   t.tablename LIKE '%' || $2 || '%'
 ORDER BY t.tablename`
+}
+
+func (p postgres) TableSQL() string {
+	return `
+SELECT cls.relname AS table_name
+     , td.description AS table_comment
+     , att.attname AS column_name
+     , cd.description AS column_comment
+     , COALESCE(col.domain_schema || '.' || col.domain_name, col.udt_name) AS data_type
+     , col.character_maximum_length AS length
+     , COALESCE(col.numeric_precision, col.datetime_precision) AS precision
+     , col.numeric_scale AS scale
+     , col.is_nullable AS nullable
+     , col.column_default AS defaul_value
+FROM pg_catalog.pg_class cls
+INNER JOIN pg_catalog.pg_namespace ns
+ON  cls.relnamespace = ns.oid
+LEFT JOIN pg_catalog.pg_description td
+ON  cls.oid = td.objoid
+AND td.objsubid = 0
+INNER JOIN pg_catalog.pg_attribute att
+ON  cls.oid = att.attrelid
+AND att.attnum > 0
+LEFT JOIN pg_catalog.pg_description cd
+ON  cls.oid = cd.objoid
+AND att.attnum = cd.objsubid
+INNER JOIN information_schema.columns col
+ON  col.table_schema = ns.nspname
+AND col.table_name = cls.relname
+AND col.column_name = att.attname
+WHERE cls.relkind = 'r'
+AND   ns.nspname = $1
+AND   cls.relname = $2
+ORDER BY col.ordinal_position`
 }
 
 func (p postgres) dataSourceName(ds DataSource) string {

@@ -3,15 +3,18 @@ package dbmodel
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 var (
-	// ErrSchemaEmpty is raised when schema no given.
+	// ErrSchemaEmpty is raised when schema is not given.
 	ErrSchemaEmpty = errors.New("Schema is required")
 	// ErrConnNotFound is raised when call function before connect to database.
 	ErrConnNotFound = errors.New("Database connection is not found")
 	// ErrInvalidDriver is raised when given driver is unknown.
 	ErrInvalidDriver = errors.New("Invalid driver")
+	// ErrTableNameEmpty is raised when table name is not given.
+	ErrTableNameEmpty = errors.New("Table name is required.")
 )
 
 // Client is table meta data loding client.
@@ -23,7 +26,7 @@ type Client struct {
 }
 
 // NewClient returns new Client for connecting to given data source.
-// 'postgres' is acceptable as driver.
+// Acceptable driver names are 'postgres'.
 func NewClient(driver string, ds DataSource) *Client {
 	p, err := findProvider(driver)
 	return &Client{
@@ -65,7 +68,7 @@ func (c *Client) Disconnect() error {
 }
 
 // AllTableNames returns all table names in given schema.
-// If schema is empty, raise error.
+// If schema is empty, raise ErrSchemaEmpty.
 func (c *Client) AllTableNames(schema string) ([]*Table, error) {
 	if err := c.preCheck(schema); err != nil {
 		return nil, err
@@ -77,11 +80,11 @@ func (c *Client) AllTableNames(schema string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return readTables(rows), nil
+	return readTableNames(rows), nil
 }
 
 // TableNames returns table names in given schema.
-// If schema is empty, raise error.
+// If schema is empty, raise ErrSchemaEmpty.
 // If name is empaty, TableNames returns all table names orderd by table names.
 // If name is given, TableNames returns table names that matches given name.
 func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
@@ -95,7 +98,32 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return readTables(rows), nil
+	return readTableNames(rows), nil
+}
+
+// Table returns table meta data.
+// Return value contains table name and column meta data.
+// If schema is empty, raise ErrSchemaEmpty.
+// If name is empaty, raise ErrTableNameEmpty.
+func (c *Client) Table(schema string, name string) (*Table, error) {
+	if err := c.preCheck(schema); err != nil {
+		return nil, err
+	}
+	if name == "" {
+		return nil, ErrTableNameEmpty
+	}
+
+	rows, err := c.db.Query(c.provider.TableSQL(), schema, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tables := readTables(rows)
+	if len(tables) == 0 {
+		return nil, fmt.Errorf("Table '%v' is not found.", name)
+	}
+	return tables[0], nil
 }
 
 func (c *Client) preCheck(schema string) error {
@@ -119,14 +147,43 @@ func findProvider(driver string) (Provider, error) {
 	return nil, ErrInvalidDriver
 }
 
+func readTableNames(rows *sql.Rows) []*Table {
+	tables := make([]*Table, 0, 10)
+	for rows.Next() {
+		var (
+			name    sql.NullString
+			comment sql.NullString
+		)
+		rows.Scan(&name, &comment)
+		t := NewTable(name.String, comment.String)
+		tables = append(tables, &t)
+	}
+	return tables
+}
+
 func readTables(rows *sql.Rows) []*Table {
 	tables := make([]*Table, 0, 10)
 	for rows.Next() {
-		var name string
-		var comment string
-		rows.Scan(&name, &comment)
-		t := NewTable(name, comment)
-		tables = append(tables, &t)
+		var (
+			tableName     sql.NullString
+			tableComment  sql.NullString
+			columnName    sql.NullString
+			columnComment sql.NullString
+			dataType      sql.NullString
+			length        sql.NullInt64
+			precision     sql.NullInt64
+			scale         sql.NullInt64
+			nullable      sql.NullString
+			defaultValue  sql.NullString
+		)
+
+		rows.Scan(&tableName, &tableComment, &columnName, &columnComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue)
+		if len(tables) == 0 || tables[len(tables)-1].Name() != tableName.String {
+			t := NewTable(tableName.String, tableComment.String)
+			tables = append(tables, &t)
+		}
+		c := NewColumn(columnName.String, columnComment.String, dataType.String, NewSize(length, precision, scale), nullable.String == "YES", defaultValue.String)
+		tables[len(tables)-1].AddColumn(&c)
 	}
 	return tables
 }

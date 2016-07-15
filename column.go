@@ -3,6 +3,7 @@ package dbmodel
 // Column is database column metadata.
 type Column struct {
 	name         string
+	comment      string
 	dataType     string
 	size         Size
 	nullable     bool
@@ -12,6 +13,11 @@ type Column struct {
 // Name returns column's name.
 func (c Column) Name() string {
 	return c.name
+}
+
+// Comment returns columns's comment
+func (c Column) Comment() string {
+	return c.comment
 }
 
 // DataType returns column's data type.
@@ -35,9 +41,10 @@ func (c Column) DefaultValue() string {
 }
 
 // NewColumn returns new Column initialized with arguments.
-func NewColumn(name string, dataType string, size Size, nullable bool, defaultValue string) Column {
+func NewColumn(name string, comment string, dataType string, size Size, nullable bool, defaultValue string) Column {
 	return Column{
 		name:         name,
+		comment:      comment,
 		dataType:     dataType,
 		size:         size,
 		nullable:     nullable,

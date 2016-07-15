@@ -45,6 +45,21 @@ func createPgTestResources() error {
 	return nil
 }
 
+func createPgTestDB() error {
+	db, err := sql.Open("postgres", "host=localhost user=postgres sslmode=disable")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, err = db.Exec("CREATE DATABASE dbmodel_test")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func dropPgTestResources() error {
 	db, err := sql.Open("postgres", "host=localhost user=postgres dbname=postgres sslmode=disable")
 	if err != nil {
