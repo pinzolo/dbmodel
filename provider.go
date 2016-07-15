@@ -7,4 +7,5 @@ type Provider interface {
 	Connect(ds DataSource) (*sql.DB, error)
 	AllTableNamesSQL() string
 	TableNamesSQL() string
+	TableSQL() string
 }

@@ -1,9 +1,6 @@
 package dbmodel
 
-import (
-	"database/sql"
-	"testing"
-)
+import "testing"
 
 func TestPostgresDataSourceName(t *testing.T) {
 	p := postgres{}
@@ -153,19 +150,122 @@ func TestTableNamesWithoutSchema(t *testing.T) {
 	}
 }
 
-func createPgTestDB() error {
-	db, err := sql.Open("postgres", "host=localhost user=postgres sslmode=disable")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
+func TestTableValid(t *testing.T) {
+	c := createPgClient()
+	defer c.Disconnect()
+	c.Connect()
 
-	_, err = db.Exec("CREATE DATABASE dbmodel_test")
+	tbl, err := c.Table("production", "location")
 	if err != nil {
-		return err
+		t.Errorf("Client should not raise error when valid schema and table name given.")
+	}
+	if tbl.Name() != "location" {
+		t.Errorf("Table name is invalid. expected: %v, actual: %v", "location", tbl.Name())
+	}
+}
+
+func TestTableColumnsCount(t *testing.T) {
+	tbl := loadPgTable("production", "location")
+	if len(tbl.Columns()) != 5 {
+		t.Errorf("Column count is invalid. expected: %v, actual: %v", 5, len(tbl.Columns()))
+	}
+}
+
+func TestTableColumnsOrder(t *testing.T) {
+	tbl := loadPgTable("production", "location")
+	if actual, expected := tbl.Columns()[0].Name(), "location_id"; actual != expected {
+		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Columns()[1].Name(), "name"; actual != expected {
+		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Columns()[2].Name(), "cost_rate"; actual != expected {
+		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Columns()[3].Name(), "availability"; actual != expected {
+		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Columns()[4].Name(), "modified_date"; actual != expected {
+		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestTableColumnComment(t *testing.T) {
+	tbl := loadPgTable("production", "location")
+	if actual, expected := tbl.Columns()[0].Comment(), "Primary key for Location records."; actual != expected {
+		t.Errorf("Cannot get valid comment. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Columns()[1].Comment(), ""; actual != expected {
+		t.Errorf("Commnet() should return empty when column comment is NULL. actual: %v", actual)
+	}
+}
+
+func TestTableColumnDataType(t *testing.T) {
+	tbl := loadPgTable("production", "location")
+	if actual, expected := tbl.Columns()[0].DataType(), "int4"; actual != expected {
+		t.Errorf("Cannot get valid data type. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Columns()[1].DataType(), "public.Name"; actual != expected {
+		t.Errorf("Cannot get valid custom data type. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestTableColumnSize(t *testing.T) {
+	tbl := loadPgTable("production", "location")
+	textSize := tbl.Columns()[1].Size()
+	if !textSize.IsValid() || !textSize.Length().Valid || textSize.Precision().Valid {
+		t.Error("Cannot get valid text size.")
+	}
+	if actual, expected := textSize.String(), "50"; actual != expected {
+		t.Errorf("Text size value is invalid. expected: %v, actual: %v", expected, actual)
 	}
 
-	return nil
+	nullSize := tbl.Columns()[2].Size()
+	if nullSize.IsValid() {
+		t.Error("Cannot get valid null size.")
+	}
+	if actual, expected := nullSize.String(), ""; actual != expected {
+		t.Errorf("Null size value is invalid. expected: %v, actual: %v", expected, actual)
+	}
+
+	intSize := tbl.Columns()[3].Size()
+	if !intSize.IsValid() || intSize.Length().Valid || !intSize.Precision().Valid || !intSize.Scale().Valid {
+		t.Error("Cannot get valid integer size.")
+	}
+	if actual, expected := intSize.String(), "8, 2"; actual != expected {
+		t.Errorf("Integer size value is invalid. expected: %v, actual: %v", expected, actual)
+	}
+
+	dateSize := tbl.Columns()[4].Size()
+	if !dateSize.IsValid() || dateSize.Length().Valid || !dateSize.Precision().Valid {
+		t.Error("Cannot get valid date size.")
+	}
+	if actual, expected := dateSize.String(), "6"; actual != expected {
+		t.Errorf("Date size value is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestTableColumnNullable(t *testing.T) {
+	tbl := loadPgTable("sales", "currency")
+	if tbl.Columns()[0].IsNullable() {
+		t.Errorf("Column '%v' is not nullable, but IsNullable() returns true", tbl.Columns()[0].Name())
+	}
+	if !tbl.Columns()[2].IsNullable() {
+		t.Errorf("Column '%v' is nullable, but IsNullable() returns false", tbl.Columns()[2].Name())
+	}
+}
+
+func TestTableColumnDefaultValue(t *testing.T) {
+	tbl := loadPgTable("production", "location")
+	if actual := tbl.Columns()[1].DefaultValue(); actual != "" {
+		t.Errorf("Column '%v' do not have default value, but DefaultValue() returns %v", tbl.Columns()[1].Name(), actual)
+	}
+	if actual, expected := tbl.Columns()[2].DefaultValue(), "0.00"; actual != expected {
+		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", expected, actual, tbl.Columns()[2].Name())
+	}
+	if actual, expected := tbl.Columns()[4].DefaultValue(), "now()"; actual != expected {
+		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", expected, actual, tbl.Columns()[4].Name())
+	}
 }
 
 func createPgClient() *Client {
@@ -174,4 +274,13 @@ func createPgClient() *Client {
 
 func createPgDataSource() DataSource {
 	return NewDataSource("localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
+}
+
+func loadPgTable(schema string, name string) *Table {
+	c := createPgClient()
+	defer c.Disconnect()
+	c.Connect()
+
+	t, _ := c.Table(schema, name)
+	return t
 }

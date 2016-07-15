@@ -1,4 +1,4 @@
--- pick from: https://github.com/lorint/AdventureWorks-for-Postgres
+-- arranged from: https://github.com/lorint/AdventureWorks-for-Postgres
 
 CREATE DOMAIN "Name" varchar(50) NULL;
 
@@ -24,6 +24,7 @@ CREATE SCHEMA sales;
 CREATE TABLE sales.currency(
     currency_code char(3) NOT NULL,
     name "Name" NOT NULL,
+    memo TEXT,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_currency_modified_date" DEFAULT (NOW())
 );
 COMMENT ON TABLE sales.currency IS 'Lookup table containing standard ISO currencies.';
@@ -51,3 +52,25 @@ ALTER TABLE sales.country_region_currency ADD
 ALTER TABLE sales.country_region_currency ADD
     CONSTRAINT "fk_country_region_currency_currency_currency_code" FOREIGN KEY
     (currency_code) REFERENCES sales.currency(currency_code);
+
+CREATE SCHEMA production;
+
+CREATE TABLE production.location(
+  location_id SERIAL NOT NULL, -- smallint
+  name "Name" NOT NULL,
+  cost_rate numeric NOT NULL CONSTRAINT "df_location_cost_rate" DEFAULT (0.00), -- smallmoney -- money
+  availability decimal(8, 2) NOT NULL CONSTRAINT "df_location_availability" DEFAULT (0.00),
+  modified_date TIMESTAMP NOT NULL CONSTRAINT "df_location_modified_date" DEFAULT (NOW()),
+  CONSTRAINT "ck_location_cost_rate" CHECK (cost_rate >= 0.00),
+  CONSTRAINT "ck_location_availability" CHECK (availability >= 0.00)
+);
+
+COMMENT ON TABLE production.location IS 'Product inventory and manufacturing locations.';
+COMMENT ON COLUMN production.location.location_id IS 'Primary key for Location records.';
+COMMENT ON COLUMN production.location.cost_rate IS 'Standard hourly cost of the manufacturing location.';
+COMMENT ON COLUMN production.location.availability IS 'Work capacity (in hours) of the manufacturing location.';
+ALTER TABLE production.location ADD
+    CONSTRAINT "pk_location_location_id" PRIMARY KEY
+    (location_id);
+CLUSTER production.location USING "pk_location_location_id";
+
