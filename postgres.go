@@ -55,22 +55,43 @@ SELECT cls.relname AS table_name
      , col.numeric_scale AS scale
      , col.is_nullable AS nullable
      , col.column_default AS defaul_value
+	 , pk.ordinal_position AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
 ON  cls.relnamespace = ns.oid
-LEFT JOIN pg_catalog.pg_description td
+LEFT OUTER JOIN pg_catalog.pg_description td
 ON  cls.oid = td.objoid
 AND td.objsubid = 0
 INNER JOIN pg_catalog.pg_attribute att
 ON  cls.oid = att.attrelid
 AND att.attnum > 0
-LEFT JOIN pg_catalog.pg_description cd
+LEFT OUTER JOIN pg_catalog.pg_description cd
 ON  cls.oid = cd.objoid
 AND att.attnum = cd.objsubid
 INNER JOIN information_schema.columns col
 ON  col.table_schema = ns.nspname
 AND col.table_name = cls.relname
 AND col.column_name = att.attname
+LEFT OUTER JOIN (
+	SELECT tc.table_schema
+	     , tc.table_name
+		 , kcu.column_name
+		 , kcu.ordinal_position
+	FROM information_schema.key_column_usage kcu
+	INNER JOIN information_schema.constraint_column_usage ccu
+	ON  ccu.table_catalog = kcu.table_catalog
+    AND ccu.table_schema = kcu.table_schema
+    AND ccu.table_name = kcu.table_name
+	AND ccu.column_name = kcu.column_name
+	INNER JOIN information_schema.table_constraints tc
+	ON  tc.table_name = ccu.table_name
+	AND tc.constraint_name = ccu.constraint_name
+	AND tc.constraint_name = kcu.constraint_name
+	WHERE tc.constraint_type = 'PRIMARY KEY'
+) pk
+ON  pk.table_schema = col.table_schema
+AND pk.table_name = col.table_name
+AND pk.column_name = col.column_name
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
 AND   cls.relname = $2
