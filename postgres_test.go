@@ -181,6 +181,20 @@ func TestPostgresTableNotFound(t *testing.T) {
 	}
 }
 
+func TestPostgresTableWithoutSchema(t *testing.T) {
+	c := createPostgresClient()
+	defer c.Disconnect()
+	c.Connect()
+
+	_, err := c.Table("", "location")
+	if err == nil {
+		t.Errorf("Client should raise error when empty schema given.")
+	}
+	if err != ErrSchemaEmpty {
+		t.Errorf("%v is invalid Error", err)
+	}
+}
+
 func TestPostgresTableColumnsCount(t *testing.T) {
 	tbl := loadPostgresTable("production", "location")
 	if len(tbl.Columns()) != 5 {
@@ -278,10 +292,30 @@ func TestPostgresTableColumnDefaultValue(t *testing.T) {
 		t.Errorf("Column '%v' do not have default value, but DefaultValue() returns %v", tbl.Columns()[1].Name(), actual)
 	}
 	if actual, expected := tbl.Columns()[2].DefaultValue(), "0.00"; actual != expected {
-		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", expected, actual, tbl.Columns()[2].Name())
+		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[2].Name(), expected, actual)
 	}
 	if actual, expected := tbl.Columns()[4].DefaultValue(), "now()"; actual != expected {
-		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", expected, actual, tbl.Columns()[4].Name())
+		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[4].Name(), expected, actual)
+	}
+}
+
+func TestPostgresTableColumnPrimaryKeyPosition(t *testing.T) {
+	// Single column primary key
+	tbl := loadPostgresTable("production", "location")
+	if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
+		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+	}
+	if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(0); actual != expected {
+		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+	}
+
+	// Multi columns primary key
+	tbl = loadPostgresTable("sales", "country_region_currency")
+	if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
+		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+	}
+	if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(2); actual != expected {
+		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[1].Name(), expected, actual)
 	}
 }
 

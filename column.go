@@ -8,6 +8,7 @@ type Column struct {
 	size         Size
 	nullable     bool
 	defaultValue string
+	pkPosition   int64
 }
 
 // Name returns column's name.
@@ -40,8 +41,14 @@ func (c Column) DefaultValue() string {
 	return c.defaultValue
 }
 
+// PrimaryKeyPosition returns this column's position in primary key columns.
+// If this column is not primary key, returns 0.
+func (c Column) PrimaryKeyPosition() int64 {
+	return c.pkPosition
+}
+
 // NewColumn returns new Column initialized with arguments.
-func NewColumn(name string, comment string, dataType string, size Size, nullable bool, defaultValue string) Column {
+func NewColumn(name string, comment string, dataType string, size Size, nullable bool, defaultValue string, pkPosition int64) Column {
 	return Column{
 		name:         name,
 		comment:      comment,
@@ -49,5 +56,6 @@ func NewColumn(name string, comment string, dataType string, size Size, nullable
 		size:         size,
 		nullable:     nullable,
 		defaultValue: defaultValue,
+		pkPosition:   pkPosition,
 	}
 }
