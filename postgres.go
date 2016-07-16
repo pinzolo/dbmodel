@@ -88,6 +88,12 @@ LEFT OUTER JOIN (
 	AND tc.constraint_name = ccu.constraint_name
 	AND tc.constraint_name = kcu.constraint_name
 	WHERE tc.constraint_type = 'PRIMARY KEY'
+	AND   tc.table_schema = $1
+	AND   tc.table_name = $2
+	AND   ccu.table_schema = $1
+	AND   ccu.table_name = $2
+	AND   kcu.table_schema = $1
+	AND   kcu.table_name = $2
 ) pk
 ON  pk.table_schema = col.table_schema
 AND pk.table_name = col.table_name
