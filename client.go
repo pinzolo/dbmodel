@@ -80,7 +80,7 @@ func (c *Client) AllTableNames(schema string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return readTableNames(schema, rows), nil
+	return c.readTableNames(schema, rows), nil
 }
 
 // TableNames returns table names in given schema.
@@ -98,7 +98,7 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return readTableNames(schema, rows), nil
+	return c.readTableNames(schema, rows), nil
 }
 
 // Table returns table meta data.
@@ -119,11 +119,12 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	}
 	defer rows.Close()
 
-	tables := readTables(schema, rows)
-	if len(tables) == 0 {
+	tbls := c.readTables(schema, rows)
+	if len(tbls) == 0 {
 		return nil, fmt.Errorf("Table '%v' is not found.", name)
 	}
-	return tables[0], nil
+	c.fillTableIndices(tbls)
+	return tbls[0], nil
 }
 
 func (c *Client) preCheck(schema string) error {
@@ -147,7 +148,7 @@ func findProvider(driver string) (Provider, error) {
 	return nil, ErrInvalidDriver
 }
 
-func readTableNames(schema string, rows *sql.Rows) []*Table {
+func (c *Client) readTableNames(schema string, rows *sql.Rows) []*Table {
 	tables := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
@@ -161,39 +162,80 @@ func readTableNames(schema string, rows *sql.Rows) []*Table {
 	return tables
 }
 
-func readTables(schema string, rows *sql.Rows) []*Table {
-	tables := make([]*Table, 0, 10)
+func (c *Client) readTables(schema string, rows *sql.Rows) []*Table {
+	tbls := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
-			tableName     sql.NullString
-			tableComment  sql.NullString
-			columnName    sql.NullString
-			columnComment sql.NullString
-			dataType      sql.NullString
-			length        sql.NullInt64
-			precision     sql.NullInt64
-			scale         sql.NullInt64
-			nullable      sql.NullString
-			defaultValue  sql.NullString
-			pkPosition    sql.NullInt64
+			tblName      sql.NullString
+			tblComment   sql.NullString
+			colName      sql.NullString
+			colComment   sql.NullString
+			dataType     sql.NullString
+			length       sql.NullInt64
+			precision    sql.NullInt64
+			scale        sql.NullInt64
+			nullable     sql.NullString
+			defaultValue sql.NullString
+			pkPosition   sql.NullInt64
 		)
 
-		rows.Scan(&tableName, &tableComment, &columnName, &columnComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue, &pkPosition)
-		if len(tables) == 0 || tables[len(tables)-1].Name() != tableName.String {
-			t := NewTable(schema, tableName.String, tableComment.String)
-			tables = append(tables, &t)
+		rows.Scan(&tblName, &tblComment, &colName, &colComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue, &pkPosition)
+		if len(tbls) == 0 || tbls[len(tbls)-1].Name() != tblName.String {
+			tbl := NewTable(schema, tblName.String, tblComment.String)
+			tbls = append(tbls, &tbl)
 		}
-		c := NewColumn(
+		col := NewColumn(
 			schema,
-			tableName.String,
-			columnName.String,
-			columnComment.String,
+			tblName.String,
+			colName.String,
+			colComment.String,
 			dataType.String,
 			NewSize(length, precision, scale),
 			nullable.String == "YES",
 			defaultValue.String,
 			pkPosition.Int64)
-		tables[len(tables)-1].AddColumn(&c)
+		tbls[len(tbls)-1].AddColumn(&col)
 	}
-	return tables
+	return tbls
+}
+
+func (c *Client) fillTableIndices(tbls []*Table) error {
+	stmt, err := c.db.Prepare(c.provider.IndexSQL())
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, tbl := range tbls {
+		err = c.appendIndices(tbl, stmt)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) appendIndices(tbl *Table, stmt *sql.Stmt) error {
+	rows, err := stmt.Query(tbl.Schema(), tbl.Name())
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			tblName sql.NullString
+			name    sql.NullString
+			uniq    sql.NullString
+			colName sql.NullString
+		)
+		rows.Scan(&tblName, &name, &uniq, &colName)
+		if len(tbl.Indices()) == 0 || tbl.lastIndex().Name() != name.String {
+			idx := NewIndex(tbl.Schema(), tbl.Name(), name.String, uniq.String == "YES")
+			tbl.AddIndex(&idx)
+		}
+		col, err := tbl.FindColumn(colName.String)
+		if err != nil {
+			return err
+		}
+		tbl.lastIndex().AddColumn(col)
+	}
+	return nil
 }

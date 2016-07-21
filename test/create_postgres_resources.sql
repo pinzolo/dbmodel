@@ -46,6 +46,7 @@ ALTER TABLE sales.country_region_currency ADD
     CONSTRAINT "pk_country_region_currency_country_region_code_currency_code" PRIMARY KEY
     (country_region_code, currency_code);
 CLUSTER sales.country_region_currency USING "pk_country_region_currency_country_region_code_currency_code";
+CREATE INDEX "idx_country_region_currency_currency_code" ON sales.country_region_currency (currency_code);
 ALTER TABLE sales.country_region_currency ADD
     CONSTRAINT "fk_country_region_currency_country_region_country_region_code" FOREIGN KEY
     (country_region_code) REFERENCES person.country_region(country_region_code);
@@ -73,4 +74,3 @@ ALTER TABLE production.location ADD
     CONSTRAINT "pk_location_location_id" PRIMARY KEY
     (location_id);
 CLUSTER production.location USING "pk_location_location_id";
-

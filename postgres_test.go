@@ -319,6 +319,51 @@ func TestPostgresTableColumnPrimaryKeyPosition(t *testing.T) {
 	}
 }
 
+func TestPostgresTableIndicesCount(t *testing.T) {
+	tbl := loadPostgresTable("sales", "country_region_currency")
+	if actual, expected := len(tbl.Indices()), 2; actual != expected {
+		t.Errorf("Index count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableIndicesOrder(t *testing.T) {
+	tbl := loadPostgresTable("sales", "country_region_currency")
+	if actual, expected := tbl.Indices()[0].Name(), "idx_country_region_currency_currency_code"; actual != expected {
+		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Indices()[1].Name(), "pk_country_region_currency_country_region_code_currency_code"; actual != expected {
+		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableIndexIsUnique(t *testing.T) {
+	tbl := loadPostgresTable("sales", "country_region_currency")
+	if tbl.Indices()[0].IsUnique() {
+		t.Errorf("Index '%v' is unique, but IsUnique() returns true", tbl.Indices()[0].Name())
+	}
+	if !tbl.Indices()[1].IsUnique() {
+		t.Errorf("Index '%v' is not unique, but IsUnique() returns false", tbl.Indices()[1].Name())
+	}
+}
+
+func TestPostgresTableIndexColumns(t *testing.T) {
+	tbl := loadPostgresTable("sales", "country_region_currency")
+	// count
+	if actual, expected := len(tbl.Indices()[0].Columns()), 1; actual != expected {
+		t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[0].Name(), actual)
+	}
+	if actual, expected := len(tbl.Indices()[1].Columns()), 2; actual != expected {
+		t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[1].Name(), actual)
+	}
+	// order
+	if actual, expected := tbl.Indices()[1].Columns()[0].Name(), "country_region_code"; actual != expected {
+		t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Indices()[1].Columns()[1].Name(), "currency_code"; actual != expected {
+		t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
 func createPostgresClient() *Client {
 	return NewClient("postgres", createPostgresDataSource())
 }

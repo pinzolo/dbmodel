@@ -1,5 +1,7 @@
 package dbmodel
 
+import "fmt"
+
 // Table stores table meta data.
 type Table struct {
 	schema  string
@@ -57,4 +59,22 @@ func (t *Table) AddIndex(idx *Index) {
 	idx.schema = t.schema
 	idx.tableName = t.name
 	t.indices = append(t.indices, idx)
+}
+
+// FindColumn returns column that name is same as argument.
+func (t *Table) FindColumn(name string) (*Column, error) {
+	for _, col := range t.Columns() {
+		if col.Name() == name {
+			return col, nil
+		}
+	}
+	return nil, fmt.Errorf("Column '%v' is not found in '%v' table.", name, t.Name())
+}
+
+func (t *Table) lastColumn() *Column {
+	return t.Columns()[len(t.Columns())-1]
+}
+
+func (t *Table) lastIndex() *Index {
+	return t.Indices()[len(t.Indices())-1]
 }

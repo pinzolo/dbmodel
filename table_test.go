@@ -54,6 +54,22 @@ func TestAddIndexToTable(t *testing.T) {
 	}
 }
 
+func TestFindColumn(t *testing.T) {
+	tbl := newUserTable()
+	col := Column{name: "id"}
+	tbl.AddColumn(&col)
+	col = Column{name: "name"}
+	tbl.AddColumn(&col)
+	fc, err := tbl.FindColumn("name")
+	if err != nil || fc.Name() != "name" {
+		t.Error("FindColumn should return name column")
+	}
+	fc, err = tbl.FindColumn("login")
+	if err == nil {
+		t.Error("FindColumn should raise error when given not having column name.")
+	}
+}
+
 func newUserTable() *Table {
 	table := NewTable("foo", "users", "")
 	return &table
