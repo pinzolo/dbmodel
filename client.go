@@ -80,7 +80,7 @@ func (c *Client) AllTableNames(schema string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return readTableNames(rows), nil
+	return readTableNames(schema, rows), nil
 }
 
 // TableNames returns table names in given schema.
@@ -98,7 +98,7 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return readTableNames(rows), nil
+	return readTableNames(schema, rows), nil
 }
 
 // Table returns table meta data.
@@ -119,7 +119,7 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	}
 	defer rows.Close()
 
-	tables := readTables(rows)
+	tables := readTables(schema, rows)
 	if len(tables) == 0 {
 		return nil, fmt.Errorf("Table '%v' is not found.", name)
 	}
@@ -147,7 +147,7 @@ func findProvider(driver string) (Provider, error) {
 	return nil, ErrInvalidDriver
 }
 
-func readTableNames(rows *sql.Rows) []*Table {
+func readTableNames(schema string, rows *sql.Rows) []*Table {
 	tables := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
@@ -155,13 +155,13 @@ func readTableNames(rows *sql.Rows) []*Table {
 			comment sql.NullString
 		)
 		rows.Scan(&name, &comment)
-		t := NewTable(name.String, comment.String)
+		t := NewTable(schema, name.String, comment.String)
 		tables = append(tables, &t)
 	}
 	return tables
 }
 
-func readTables(rows *sql.Rows) []*Table {
+func readTables(schema string, rows *sql.Rows) []*Table {
 	tables := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
@@ -181,7 +181,7 @@ func readTables(rows *sql.Rows) []*Table {
 		// TODO: set to pkIndex
 		rows.Scan(&tableName, &tableComment, &columnName, &columnComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue, &pkPosition)
 		if len(tables) == 0 || tables[len(tables)-1].Name() != tableName.String {
-			t := NewTable(tableName.String, tableComment.String)
+			t := NewTable(schema, tableName.String, tableComment.String)
 			tables = append(tables, &t)
 		}
 		c := NewColumn(columnName.String,

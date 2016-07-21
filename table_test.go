@@ -28,6 +28,6 @@ func TestAddColumn(t *testing.T) {
 }
 
 func newUserTable() *Table {
-	table := NewTable("users", "")
+	table := NewTable("foo", "users", "")
 	return &table
 }
