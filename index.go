@@ -41,7 +41,7 @@ func NewIndex(schema string, tableName string, name string, unique bool) Index {
 		tableName: tableName,
 		name:      name,
 		unique:    unique,
-		columns:   make([]*Column, 0, 5), // default size 5
+		columns:   make([]*Column, 0, 5),
 	}
 }
 
