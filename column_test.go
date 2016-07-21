@@ -3,7 +3,13 @@ package dbmodel
 import "testing"
 
 func TestNewColumn(t *testing.T) {
-	c := NewColumn("name", "comment", "TEXT", NewSize(validInt(9), invalidInt(), invalidInt()), true, "Jone Doe", int64(1))
+	c := NewColumn("foo", "users", "name", "comment", "TEXT", NewSize(validInt(9), invalidInt(), invalidInt()), true, "Jone Doe", int64(1))
+	if expected, actual := "foo", c.Schema(); actual != expected {
+		t.Errorf("Schema() returns invalid value. expected: %v, actual: %v", expected, actual)
+	}
+	if expected, actual := "users", c.TableName(); actual != expected {
+		t.Errorf("TableName() returns invalid value. expected: %v, actual: %v", expected, actual)
+	}
 	if expected, actual := "name", c.Name(); actual != expected {
 		t.Errorf("Name() returns invalid value. expected: %v, actual: %v", expected, actual)
 	}

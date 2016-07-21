@@ -55,7 +55,7 @@ SELECT cls.relname AS table_name
      , col.numeric_scale AS scale
      , col.is_nullable AS nullable
      , col.column_default AS defaul_value
-	 , pk.ordinal_position AS primary_key_position
+     , pk.ordinal_position AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
 ON  cls.relnamespace = ns.oid
@@ -73,27 +73,27 @@ ON  col.table_schema = ns.nspname
 AND col.table_name = cls.relname
 AND col.column_name = att.attname
 LEFT OUTER JOIN (
-	SELECT tc.table_schema
-	     , tc.table_name
-		 , kcu.column_name
-		 , kcu.ordinal_position
-	FROM information_schema.key_column_usage kcu
-	INNER JOIN information_schema.constraint_column_usage ccu
-	ON  ccu.table_catalog = kcu.table_catalog
+    SELECT tc.table_schema
+         , tc.table_name
+         , kcu.column_name
+         , kcu.ordinal_position
+    FROM information_schema.key_column_usage kcu
+    INNER JOIN information_schema.constraint_column_usage ccu
+    ON  ccu.table_catalog = kcu.table_catalog
     AND ccu.table_schema = kcu.table_schema
     AND ccu.table_name = kcu.table_name
-	AND ccu.column_name = kcu.column_name
-	INNER JOIN information_schema.table_constraints tc
-	ON  tc.table_name = ccu.table_name
-	AND tc.constraint_name = ccu.constraint_name
-	AND tc.constraint_name = kcu.constraint_name
-	WHERE tc.constraint_type = 'PRIMARY KEY'
-	AND   tc.table_schema = $1
-	AND   tc.table_name = $2
-	AND   ccu.table_schema = $1
-	AND   ccu.table_name = $2
-	AND   kcu.table_schema = $1
-	AND   kcu.table_name = $2
+    AND ccu.column_name = kcu.column_name
+    INNER JOIN information_schema.table_constraints tc
+    ON  tc.table_name = ccu.table_name
+    AND tc.constraint_name = ccu.constraint_name
+    AND tc.constraint_name = kcu.constraint_name
+    WHERE tc.constraint_type = 'PRIMARY KEY'
+    AND   tc.table_schema = $1
+    AND   tc.table_name = $2
+    AND   ccu.table_schema = $1
+    AND   ccu.table_name = $2
+    AND   kcu.table_schema = $1
+    AND   kcu.table_name = $2
 ) pk
 ON  pk.table_schema = col.table_schema
 AND pk.table_name = col.table_name
@@ -102,6 +102,35 @@ WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
 AND   cls.relname = $2
 ORDER BY col.ordinal_position`
+}
+
+func (p postgres) IndexSQL() string {
+	return `
+SELECT col.table_name
+     , idxs.indexname AS index_name
+     , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
+     , col.column_name
+FROM pg_catalog.pg_class cls
+INNER JOIN pg_catalog.pg_namespace ns
+ON  cls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_indexes idxs
+ON  idxs.schemaname = ns.nspname
+AND idxs.indexname = cls.relname
+INNER JOIN (
+    SELECT indexrelid
+         , indisunique AS uniq
+         , string_to_array(indkey::text, ' ')::int[] AS column_positions
+         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS column_ordinal
+    FROM pg_catalog.pg_index
+) idx
+ON idx.indexrelid = cls.oid
+JOIN information_schema.columns col
+ON  col.table_schema = idxs.schemaname
+AND col.table_name = idxs.tablename
+AND col.ordinal_position = idx.column_positions[column_ordinal]
+WHERE idxs.schemaname = $1
+AND   idxs.tablename = $2
+ORDER BY table_name, idxs.indexname, idx.column_ordinal`
 }
 
 func (p postgres) dataSourceName(ds DataSource) string {

@@ -8,4 +8,5 @@ type Provider interface {
 	AllTableNamesSQL() string
 	TableNamesSQL() string
 	TableSQL() string
+	IndexSQL() string
 }
