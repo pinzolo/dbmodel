@@ -178,13 +178,15 @@ func readTables(schema string, rows *sql.Rows) []*Table {
 			pkPosition    sql.NullInt64
 		)
 
-		// TODO: set to pkIndex
 		rows.Scan(&tableName, &tableComment, &columnName, &columnComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue, &pkPosition)
 		if len(tables) == 0 || tables[len(tables)-1].Name() != tableName.String {
 			t := NewTable(schema, tableName.String, tableComment.String)
 			tables = append(tables, &t)
 		}
-		c := NewColumn(columnName.String,
+		c := NewColumn(
+			schema,
+			tableName.String,
+			columnName.String,
 			columnComment.String,
 			dataType.String,
 			NewSize(length, precision, scale),

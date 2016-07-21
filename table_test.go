@@ -18,6 +18,12 @@ func TestAddColumn(t *testing.T) {
 	if tbl.Columns()[0].Name() != "name" {
 		t.Errorf("Invalid column added. (%#v)", tbl.Columns())
 	}
+	if tbl.Columns()[0].Schema() != tbl.Schema() {
+		t.Errorf("Column's schema should be set by table's schema.")
+	}
+	if tbl.Columns()[0].TableName() != tbl.Name() {
+		t.Errorf("Column's table name should be set by table's name.")
+	}
 	for i := 0; i < 10; i++ {
 		c := Column{name: "name" + strconv.Itoa(i)}
 		tbl.AddColumn(&c)

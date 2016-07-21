@@ -40,5 +40,7 @@ func NewTable(schema string, tableName string, comment string) Table {
 
 // AddColumn append column to Columns.
 func (t *Table) AddColumn(col *Column) {
+	col.schema = t.schema
+	col.tableName = t.name
 	t.columns = append(t.columns, col)
 }
