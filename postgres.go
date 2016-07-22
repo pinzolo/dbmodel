@@ -77,21 +77,14 @@ LEFT OUTER JOIN (
          , tc.table_name
          , kcu.column_name
          , kcu.ordinal_position
-    FROM information_schema.key_column_usage kcu
-    INNER JOIN information_schema.constraint_column_usage ccu
-    ON  ccu.table_catalog = kcu.table_catalog
-    AND ccu.table_schema = kcu.table_schema
-    AND ccu.table_name = kcu.table_name
-    AND ccu.column_name = kcu.column_name
-    INNER JOIN information_schema.table_constraints tc
-    ON  tc.table_name = ccu.table_name
-    AND tc.constraint_name = ccu.constraint_name
-    AND tc.constraint_name = kcu.constraint_name
+    FROM information_schema.table_constraints tc
+    INNER JOIN information_schema.key_column_usage kcu
+    ON  kcu.constraint_catalog = tc.constraint_catalog
+    AND kcu.constraint_schema = tc.constraint_schema
+    AND kcu.constraint_name = tc.constraint_name
     WHERE tc.constraint_type = 'PRIMARY KEY'
     AND   tc.table_schema = $1
     AND   tc.table_name = $2
-    AND   ccu.table_schema = $1
-    AND   ccu.table_name = $2
     AND   kcu.table_schema = $1
     AND   kcu.table_name = $2
 ) pk
