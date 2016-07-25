@@ -126,6 +126,7 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	tbl := tbls[0]
 	c.appendIndices(tbl)
 	c.appendForeignKyes(tbl)
+	c.appendReferencedKyes(tbl)
 	return tbl, nil
 }
 
@@ -261,6 +262,41 @@ func (c *Client) appendForeignKyes(tbl *Table) error {
 		}
 		cr := NewColumnReference(col, fCol)
 		tbl.lastForeignKey().AddColumnReference(&cr)
+	}
+	return nil
+}
+
+func (c *Client) appendReferencedKyes(tbl *Table) error {
+	rows, err := c.db.Query(c.provider.ReferencedKeysSQL(), tbl.Schema(), tbl.Name())
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			name     sql.NullString
+			schema   sql.NullString
+			tblName  sql.NullString
+			colName  sql.NullString
+			fSchema  sql.NullString
+			fTblName sql.NullString
+			fColName sql.NullString
+		)
+		rows.Scan(&name, &schema, &tblName, &colName, &fSchema, &fTblName, &fColName)
+		if len(tbl.ReferencedKeys()) == 0 || tbl.lastRefKey().Name() != name.String {
+			fk := NewForeignKey(schema.String, tblName.String, name.String)
+			tbl.AddReferencedKey(&fk)
+		}
+		col := &Column{
+			schema:    schema.String,
+			tableName: tblName.String,
+			name:      colName.String,
+		}
+		fCol, err := tbl.FindColumn(fColName.String)
+		if err != nil {
+			return err
+		}
+		cr := NewColumnReference(col, fCol)
+		tbl.lastRefKey().AddColumnReference(&cr)
 	}
 	return nil
 }

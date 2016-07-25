@@ -2,6 +2,7 @@ package dbmodel
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 )
@@ -405,6 +406,63 @@ func TestPostgresTableForeignKeysColumnReferences(t *testing.T) {
 	}
 }
 
+func TestPostgresTableReferencedKeysCount(t *testing.T) {
+	tbl := loadPostgresTable("person", "country_region")
+	if actual, expected := len(tbl.ReferencedKeys()), 3; actual != expected {
+		t.Errorf("Referenced key count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableReferencedKeysOrder(t *testing.T) {
+	tbl := loadPostgresTable("person", "country_region")
+	if actual, expected := tbl.ReferencedKeys()[0].Name(), "fk_country_region_currency_country_region_country_region_code"; actual != expected {
+		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.ReferencedKeys()[1].Name(), "fk_sales_territory_country_region_country_region_code"; actual != expected {
+		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.ReferencedKeys()[2].Name(), "fk_state_province_country_region_country_region_code"; actual != expected {
+		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableReferencedKeysColumnCount(t *testing.T) {
+	tbl := loadPostgresTable("person", "country_region")
+	if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 1; actual != expected {
+		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := len(tbl.ReferencedKeys()[1].ColumnReferences()), 1; actual != expected {
+		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := len(tbl.ReferencedKeys()[2].ColumnReferences()), 1; actual != expected {
+		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	tbl = loadPostgresTable("sales", "special_offer_product")
+	if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 2; actual != expected {
+		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableReferencedKeysColumnReferences(t *testing.T) {
+	tbl := loadPostgresTable("person", "country_region")
+	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "sales.country_region_currency.country_region_code -> person.country_region.country_region_code"; actual != expected {
+		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := colRefToString(tbl.ReferencedKeys()[1].ColumnReferences()[0]), "sales.sales_territory.country_region_code -> person.country_region.country_region_code"; actual != expected {
+		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := colRefToString(tbl.ReferencedKeys()[2].ColumnReferences()[0]), "person.state_province.country_region_code -> person.country_region.country_region_code"; actual != expected {
+		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	tbl = loadPostgresTable("sales", "special_offer_product")
+	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "sales.sales_order_detail.special_offer_id -> sales.special_offer_product.special_offer_id"; actual != expected {
+		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
+		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
 func createPostgresClient() *Client {
 	return NewClient("postgres", createPostgresDataSource())
 }
@@ -418,7 +476,10 @@ func loadPostgresTable(schema string, name string) *Table {
 	defer c.Disconnect()
 	c.Connect()
 
-	t, _ := c.Table(schema, name)
+	t, err := c.Table(schema, name)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return t
 }
 

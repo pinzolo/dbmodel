@@ -101,12 +101,6 @@ func TestAddReferencedKeyToTable(t *testing.T) {
 	if len(usr.ReferencedKeys()) != 1 {
 		t.Errorf("If table has a referenced key, ReferencedKeys() should be 1 length. (%+v)", usr.ReferencedKeys())
 	}
-	if usr.ReferencedKeys()[0].Schema() != usr.Schema() {
-		t.Error("Referenced key's schema should be set by table's schema.")
-	}
-	if usr.ReferencedKeys()[0].TableName() != usr.Name() {
-		t.Error("Referenced key's table name should be set by table's name.")
-	}
 	if usr.ReferencedKeys()[0].Name() != "posts_user_id" {
 		t.Error("Invalid referenced key is added.")
 	}

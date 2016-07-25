@@ -10,4 +10,5 @@ type Provider interface {
 	TableSQL() string
 	IndicesSQL() string
 	ForeignKeysSQL() string
+	ReferencedKeysSQL() string
 }

@@ -84,8 +84,6 @@ func (t *Table) AddForeignKey(fk *ForeignKey) {
 
 // AddReferencedKey appends other table's foreign key that reference this table's column to ReferencedKeys.
 func (t *Table) AddReferencedKey(rk *ForeignKey) {
-	rk.schema = t.schema
-	rk.tableName = t.name
 	t.refKeys = append(t.refKeys, rk)
 }
 
