@@ -16,7 +16,8 @@ func (p postgres) Connect(ds DataSource) (*sql.DB, error) {
 
 func (p postgres) AllTableNamesSQL() string {
 	return `
-SELECT t.tablename AS table_name
+SELECT t.schemaname AS schema
+     , t.tablename AS table_name
      , d.description AS table_comment
 FROM pg_catalog.pg_tables t
 LEFT OUTER JOIN pg_catalog.pg_class c1
@@ -30,7 +31,8 @@ ORDER BY t.tablename`
 
 func (p postgres) TableNamesSQL() string {
 	return `
-SELECT t.tablename AS table_name
+SELECT t.schemaname AS schema
+     , t.tablename AS table_name
      , d.description AS table_comment
 FROM pg_catalog.pg_tables t
 LEFT OUTER JOIN pg_catalog.pg_class c1

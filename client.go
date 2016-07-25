@@ -80,7 +80,7 @@ func (c *Client) AllTableNames(schema string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return c.readTableNames(schema, rows), nil
+	return c.readTableNames(rows), nil
 }
 
 // TableNames returns table names in given schema.
@@ -98,7 +98,7 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return c.readTableNames(schema, rows), nil
+	return c.readTableNames(rows), nil
 }
 
 // Table returns table meta data.
@@ -148,15 +148,16 @@ func findProvider(driver string) (Provider, error) {
 	return nil, ErrInvalidDriver
 }
 
-func (c *Client) readTableNames(schema string, rows *sql.Rows) []*Table {
+func (c *Client) readTableNames(rows *sql.Rows) []*Table {
 	tables := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
+			schema  sql.NullString
 			name    sql.NullString
 			comment sql.NullString
 		)
-		rows.Scan(&name, &comment)
-		t := NewTable(schema, name.String, comment.String)
+		rows.Scan(&schema, &name, &comment)
+		t := NewTable(schema.String, name.String, comment.String)
 		tables = append(tables, &t)
 	}
 	return tables
