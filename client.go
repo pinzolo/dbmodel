@@ -223,14 +223,15 @@ func (c *Client) appendIndices(tbl *Table, stmt *sql.Stmt) error {
 	}
 	for rows.Next() {
 		var (
+			schema  sql.NullString
 			tblName sql.NullString
 			name    sql.NullString
 			uniq    sql.NullString
 			colName sql.NullString
 		)
-		rows.Scan(&tblName, &name, &uniq, &colName)
+		rows.Scan(&schema, &tblName, &name, &uniq, &colName)
 		if len(tbl.Indices()) == 0 || tbl.lastIndex().Name() != name.String {
-			idx := NewIndex(tbl.Schema(), tbl.Name(), name.String, uniq.String == "YES")
+			idx := NewIndex(schema.String, tblName.String, name.String, uniq.String == "YES")
 			tbl.AddIndex(&idx)
 		}
 		col, err := tbl.FindColumn(colName.String)

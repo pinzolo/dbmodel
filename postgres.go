@@ -102,7 +102,8 @@ ORDER BY col.ordinal_position`
 
 func (p postgres) IndexSQL() string {
 	return `
-SELECT col.table_name
+SELECT idxs.schemaname AS schema
+     , col.table_name
      , idxs.indexname AS index_name
      , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
      , col.column_name
