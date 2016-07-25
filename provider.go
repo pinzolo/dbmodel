@@ -8,7 +8,11 @@ type Provider interface {
 	AllTableNamesSQL() string
 	TableNamesSQL() string
 	TableSQL() string
+	AllTablesSQL() string
 	IndicesSQL() string
+	AllIndicesSQL() string
 	ForeignKeysSQL() string
+	AllForeignKeysSQL() string
 	ReferencedKeysSQL() string
+	AllReferencedKeysSQL() string
 }
