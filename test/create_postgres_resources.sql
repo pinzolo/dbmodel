@@ -1795,7 +1795,7 @@ ALTER TABLE purchasing.purchase_order_header ADD CONSTRAINT "fk_purchase_order_h
 ALTER TABLE purchasing.purchase_order_header ADD CONSTRAINT "fk_purchase_order_header_ship_method_ship_method_id" FOREIGN KEY (ship_method_id) REFERENCES purchasing.ship_method(ship_method_id);
 
 ALTER TABLE sales.sales_order_detail ADD CONSTRAINT "fk_sales_order_detail_sales_order_header_sales_order_id" FOREIGN KEY (sales_order_id) REFERENCES sales.sales_order_header(sales_order_id) ON DELETE CASCADE;
-ALTER TABLE sales.sales_order_detail ADD CONSTRAINT "fk_sales_order_detail_special_offer_product_special_offer_i_dproduct_id" FOREIGN KEY (special_offer_id, product_id) REFERENCES sales.special_offer_product(special_offer_id, product_id);
+ALTER TABLE sales.sales_order_detail ADD CONSTRAINT "fk_sales_order_detail_special_offer_product_special_offer_id_product_id" FOREIGN KEY (special_offer_id, product_id) REFERENCES sales.special_offer_product(special_offer_id, product_id);
 
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_address_bill_to_address_id" FOREIGN KEY (bill_to_address_id) REFERENCES person.Address(address_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_address_ship_to_address_id" FOREIGN KEY (ship_to_address_id) REFERENCES person.address(address_id);

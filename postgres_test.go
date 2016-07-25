@@ -1,6 +1,7 @@
 package dbmodel
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -331,9 +332,9 @@ func TestPostgresTableIndicesOrder(t *testing.T) {
 	if actual, expected := tbl.Indices()[0].Name(), "idx_country_region_currency_currency_code"; actual != expected {
 		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
 	}
-	// if actual, expected := tbl.Indices()[1].Name(), "pk_country_region_currency_country_region_code_currency_code"; actual != expected {
-	// 	t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
-	// }
+	if actual, expected := tbl.Indices()[1].Name(), "pk_country_region_currency_country_region_code_currency_code"; actual != expected {
+		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
+	}
 }
 
 func TestPostgresTableIndexIsUnique(t *testing.T) {
@@ -364,6 +365,46 @@ func TestPostgresTableIndexColumns(t *testing.T) {
 	}
 }
 
+func TestPostgresTableForeignKeysCount(t *testing.T) {
+	tbl := loadPostgresTable("sales", "sales_order_detail")
+	if actual, expected := len(tbl.ForeignKeys()), 2; actual != expected {
+		t.Errorf("Foreign key count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableForeignKeysOrder(t *testing.T) {
+	tbl := loadPostgresTable("sales", "sales_order_detail")
+	if actual, expected := tbl.ForeignKeys()[0].Name(), "fk_sales_order_detail_sales_order_header_sales_order_id"; actual != expected {
+		t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.ForeignKeys()[1].Name(), "fk_sales_order_detail_special_offer_product_special_offer_id_pr"; actual != expected {
+		t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableForeignKeysColumnCount(t *testing.T) {
+	tbl := loadPostgresTable("sales", "sales_order_detail")
+	if actual, expected := len(tbl.ForeignKeys()[0].ColumnReferences()), 1; actual != expected {
+		t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := len(tbl.ForeignKeys()[1].ColumnReferences()), 2; actual != expected {
+		t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableForeignKeysColumnReferences(t *testing.T) {
+	tbl := loadPostgresTable("sales", "sales_order_detail")
+	if actual, expected := colRefToString(tbl.ForeignKeys()[0].ColumnReferences()[0]), "sales.sales_order_detail.sales_order_id -> sales.sales_order_header.sales_order_id"; actual != expected {
+		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := colRefToString(tbl.ForeignKeys()[1].ColumnReferences()[0]), "sales.sales_order_detail.special_offer_id -> sales.special_offer_product.special_offer_id"; actual != expected {
+		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := colRefToString(tbl.ForeignKeys()[1].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
+		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
 func createPostgresClient() *Client {
 	return NewClient("postgres", createPostgresDataSource())
 }
@@ -379,4 +420,10 @@ func loadPostgresTable(schema string, name string) *Table {
 
 	t, _ := c.Table(schema, name)
 	return t
+}
+
+func colRefToString(colRef *ColumnReference) string {
+	return fmt.Sprintf("%v.%v.%v -> %v.%v.%v",
+		colRef.From().Schema(), colRef.From().TableName(), colRef.From().Name(),
+		colRef.To().Schema(), colRef.To().TableName(), colRef.To().Name())
 }

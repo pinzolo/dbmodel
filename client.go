@@ -123,8 +123,10 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	if len(tbls) == 0 {
 		return nil, fmt.Errorf("Table '%v' is not found.", name)
 	}
-	c.fillTableIndices(tbls)
-	return tbls[0], nil
+	tbl := tbls[0]
+	c.appendIndices(tbl)
+	c.appendForeignKyes(tbl)
+	return tbl, nil
 }
 
 func (c *Client) preCheck(schema string) error {
@@ -201,23 +203,8 @@ func (c *Client) readTables(rows *sql.Rows) []*Table {
 	return tbls
 }
 
-func (c *Client) fillTableIndices(tbls []*Table) error {
-	stmt, err := c.db.Prepare(c.provider.IndicesSQL())
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	for _, tbl := range tbls {
-		err = c.appendIndices(tbl, stmt)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Client) appendIndices(tbl *Table, stmt *sql.Stmt) error {
-	rows, err := stmt.Query(tbl.Schema(), tbl.Name())
+func (c *Client) appendIndices(tbl *Table) error {
+	rows, err := c.db.Query(c.provider.IndicesSQL(), tbl.Schema(), tbl.Name())
 	if err != nil {
 		return err
 	}
@@ -239,6 +226,41 @@ func (c *Client) appendIndices(tbl *Table, stmt *sql.Stmt) error {
 			return err
 		}
 		tbl.lastIndex().AddColumn(col)
+	}
+	return nil
+}
+
+func (c *Client) appendForeignKyes(tbl *Table) error {
+	rows, err := c.db.Query(c.provider.ForeignKeysSQL(), tbl.Schema(), tbl.Name())
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			name     sql.NullString
+			schema   sql.NullString
+			tblName  sql.NullString
+			colName  sql.NullString
+			fSchema  sql.NullString
+			fTblName sql.NullString
+			fColName sql.NullString
+		)
+		rows.Scan(&name, &schema, &tblName, &colName, &fSchema, &fTblName, &fColName)
+		if len(tbl.ForeignKeys()) == 0 || tbl.lastForeignKey().Name() != name.String {
+			fk := NewForeignKey(schema.String, tblName.String, name.String)
+			tbl.AddForeignKey(&fk)
+		}
+		col, err := tbl.FindColumn(colName.String)
+		if err != nil {
+			return err
+		}
+		fCol := &Column{
+			schema:    fSchema.String,
+			tableName: fTblName.String,
+			name:      fColName.String,
+		}
+		cr := NewColumnReference(col, fCol)
+		tbl.lastForeignKey().AddColumnReference(&cr)
 	}
 	return nil
 }
