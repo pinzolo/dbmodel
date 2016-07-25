@@ -54,6 +54,58 @@ func TestAddIndexToTable(t *testing.T) {
 	}
 }
 
+func TestAddForeignKeyToTable(t *testing.T) {
+	usr := newUserTable()
+	usr.AddColumn(&Column{name: "id"})
+	pst := newPostTable()
+	pst.AddColumn(&Column{name: "id"})
+	pst.AddColumn(&Column{name: "user_id"})
+	if len(pst.ForeignKeys()) != 0 {
+		t.Error("If table has no foreign key, ForeignKeys() should be empty.")
+	}
+	fk := NewForeignKey("foo", "posts", "posts_user_id")
+	colUserID, _ := pst.FindColumn("user_id")
+	colID, _ := usr.FindColumn("id")
+	cr := NewColumnReference(colUserID, colID)
+	fk.AddColumnReference(&cr)
+	pst.AddForeignKey(&fk)
+	if len(pst.ForeignKeys()) != 1 {
+		t.Errorf("If table has a foreign key, ForeignKeys() should be 1 length. (%+v)", pst.ForeignKeys())
+	}
+	if pst.ForeignKeys()[0].Schema() != pst.Schema() {
+		t.Error("Foreign key's schema should be set by table's schema.")
+	}
+	if pst.ForeignKeys()[0].TableName() != pst.Name() {
+		t.Error("Foreign key's table name should be set by table's name.")
+	}
+	if pst.ForeignKeys()[0].Name() != "posts_user_id" {
+		t.Error("Invalid forein key is added.")
+	}
+}
+
+func TestAddReferencedKeyToTable(t *testing.T) {
+	usr := newUserTable()
+	usr.AddColumn(&Column{name: "id"})
+	pst := newPostTable()
+	pst.AddColumn(&Column{name: "id"})
+	pst.AddColumn(&Column{name: "user_id"})
+	if len(usr.ReferencedKeys()) != 0 {
+		t.Error("If table has no referenced key, ReferencedKeys() should be empty.")
+	}
+	fk := NewForeignKey("foo", "posts", "posts_user_id")
+	colUserID, _ := pst.FindColumn("user_id")
+	colID, _ := usr.FindColumn("id")
+	cr := NewColumnReference(colUserID, colID)
+	fk.AddColumnReference(&cr)
+	usr.AddReferencedKey(&fk)
+	if len(usr.ReferencedKeys()) != 1 {
+		t.Errorf("If table has a referenced key, ReferencedKeys() should be 1 length. (%+v)", usr.ReferencedKeys())
+	}
+	if usr.ReferencedKeys()[0].Name() != "posts_user_id" {
+		t.Error("Invalid referenced key is added.")
+	}
+}
+
 func TestFindColumn(t *testing.T) {
 	tbl := newUserTable()
 	col := Column{name: "id"}
@@ -72,5 +124,10 @@ func TestFindColumn(t *testing.T) {
 
 func newUserTable() *Table {
 	table := NewTable("foo", "users", "")
+	return &table
+}
+
+func newPostTable() *Table {
+	table := NewTable("foo", "posts", "")
 	return &table
 }

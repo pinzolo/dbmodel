@@ -9,4 +9,6 @@ type Provider interface {
 	TableNamesSQL() string
 	TableSQL() string
 	IndicesSQL() string
+	ForeignKeysSQL() string
+	ReferencedKeysSQL() string
 }

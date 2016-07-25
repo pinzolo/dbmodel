@@ -130,6 +130,98 @@ AND   idxs.tablename = $2
 ORDER BY table_name, idxs.indexname, idx.column_ordinal`
 }
 
+func (p postgres) ForeignKeysSQL() string {
+	return `
+SELECT cns.conname AS foreign_key_name
+     , ns.nspname AS schema
+     , cls.relname AS table_name
+     , att.attname AS column_name
+     , fns.nspname AS foreign_schema
+     , fcls.relname AS foreign_table_name
+     , fatt.attname AS foreign_column_name
+FROM (
+    SELECT conname
+         , conrelid AS relid
+         , conkey AS key
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'f'
+) AS cns
+INNER JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.relid
+INNER JOIN pg_catalog.pg_namespace ns
+ON cls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_attribute att
+ON  att.attrelid = cls.oid
+AND att.attnum = cns.key[cns.pos]
+JOIN (
+    SELECT conname
+         , confrelid AS relid
+         , confkey AS key
+         , generate_series(1, length(array_to_string(confkey, ' ')) - length(array_to_string(confkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'f'
+) AS fcns
+ON fcns.conname = cns.conname
+AND fcns.pos = cns.pos
+INNER JOIN pg_catalog.pg_class fcls
+ON fcls.oid = fcns.relid
+INNER JOIN pg_catalog.pg_namespace fns
+ON fcls.relnamespace = fns.oid
+INNER JOIN pg_catalog.pg_attribute fatt
+ON  fatt.attrelid = fcls.oid
+AND fatt.attnum = fcns.key[fcns.pos]
+WHERE ns.nspname = $1
+AND   cls.relname = $2
+ORDER BY cls.relname, cns.conname, cns.pos`
+}
+
+func (p postgres) ReferencedKeysSQL() string {
+	return `
+SELECT cns.conname AS referenced_key_name
+     , ns.nspname AS schema
+     , cls.relname AS table_name
+     , att.attname AS column_name
+     , fns.nspname AS foreign_schema
+     , fcls.relname AS foreign_table_name
+     , fatt.attname AS foreign_column_name
+FROM (
+    SELECT conname
+         , conrelid AS relid
+         , conkey AS key
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'f'
+) AS cns
+INNER JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.relid
+INNER JOIN pg_catalog.pg_namespace ns
+ON cls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_attribute att
+ON  att.attrelid = cls.oid
+AND att.attnum = cns.key[cns.pos]
+JOIN (
+    SELECT conname
+         , confrelid AS relid
+         , confkey AS key
+         , generate_series(1, length(array_to_string(confkey, ' ')) - length(array_to_string(confkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'f'
+) AS fcns
+ON fcns.conname = cns.conname
+AND fcns.pos = cns.pos
+INNER JOIN pg_catalog.pg_class fcls
+ON fcls.oid = fcns.relid
+INNER JOIN pg_catalog.pg_namespace fns
+ON fcls.relnamespace = fns.oid
+INNER JOIN pg_catalog.pg_attribute fatt
+ON  fatt.attrelid = fcls.oid
+AND fatt.attnum = fcns.key[fcns.pos]
+WHERE fns.nspname = $1
+AND   fcls.relname = $2
+ORDER BY fcls.relname, fcns.conname, fcns.pos`
+}
+
 func (p postgres) dataSourceName(ds DataSource) string {
 	parts := make([]string, 0, 10)
 	if ds.Host != "" {
