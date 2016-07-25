@@ -97,10 +97,6 @@ func (t *Table) FindColumn(name string) (*Column, error) {
 	return nil, fmt.Errorf("Column '%v' is not found in '%v' table.", name, t.Name())
 }
 
-func (t *Table) lastColumn() *Column {
-	return t.columns[len(t.columns)-1]
-}
-
 func (t *Table) lastIndex() *Index {
 	return t.indices[len(t.indices)-1]
 }
