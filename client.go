@@ -80,7 +80,7 @@ func (c *Client) AllTableNames(schema string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return c.readTableNames(schema, rows), nil
+	return c.readTableNames(rows), nil
 }
 
 // TableNames returns table names in given schema.
@@ -98,7 +98,7 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 	}
 	defer rows.Close()
 
-	return c.readTableNames(schema, rows), nil
+	return c.readTableNames(rows), nil
 }
 
 // Table returns table meta data.
@@ -119,7 +119,7 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	}
 	defer rows.Close()
 
-	tbls := c.readTables(schema, rows)
+	tbls := c.readTables(rows)
 	if len(tbls) == 0 {
 		return nil, fmt.Errorf("Table '%v' is not found.", name)
 	}
@@ -148,24 +148,26 @@ func findProvider(driver string) (Provider, error) {
 	return nil, ErrInvalidDriver
 }
 
-func (c *Client) readTableNames(schema string, rows *sql.Rows) []*Table {
+func (c *Client) readTableNames(rows *sql.Rows) []*Table {
 	tables := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
+			schema  sql.NullString
 			name    sql.NullString
 			comment sql.NullString
 		)
-		rows.Scan(&name, &comment)
-		t := NewTable(schema, name.String, comment.String)
+		rows.Scan(&schema, &name, &comment)
+		t := NewTable(schema.String, name.String, comment.String)
 		tables = append(tables, &t)
 	}
 	return tables
 }
 
-func (c *Client) readTables(schema string, rows *sql.Rows) []*Table {
+func (c *Client) readTables(rows *sql.Rows) []*Table {
 	tbls := make([]*Table, 0, 10)
 	for rows.Next() {
 		var (
+			schema       sql.NullString
 			tblName      sql.NullString
 			tblComment   sql.NullString
 			colName      sql.NullString
@@ -179,13 +181,13 @@ func (c *Client) readTables(schema string, rows *sql.Rows) []*Table {
 			pkPosition   sql.NullInt64
 		)
 
-		rows.Scan(&tblName, &tblComment, &colName, &colComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue, &pkPosition)
+		rows.Scan(&schema, &tblName, &tblComment, &colName, &colComment, &dataType, &length, &precision, &scale, &nullable, &defaultValue, &pkPosition)
 		if len(tbls) == 0 || tbls[len(tbls)-1].Name() != tblName.String {
-			tbl := NewTable(schema, tblName.String, tblComment.String)
+			tbl := NewTable(schema.String, tblName.String, tblComment.String)
 			tbls = append(tbls, &tbl)
 		}
 		col := NewColumn(
-			schema,
+			schema.String,
 			tblName.String,
 			colName.String,
 			colComment.String,
@@ -200,7 +202,7 @@ func (c *Client) readTables(schema string, rows *sql.Rows) []*Table {
 }
 
 func (c *Client) fillTableIndices(tbls []*Table) error {
-	stmt, err := c.db.Prepare(c.provider.IndexSQL())
+	stmt, err := c.db.Prepare(c.provider.IndicesSQL())
 	if err != nil {
 		return err
 	}
@@ -221,14 +223,15 @@ func (c *Client) appendIndices(tbl *Table, stmt *sql.Stmt) error {
 	}
 	for rows.Next() {
 		var (
+			schema  sql.NullString
 			tblName sql.NullString
 			name    sql.NullString
 			uniq    sql.NullString
 			colName sql.NullString
 		)
-		rows.Scan(&tblName, &name, &uniq, &colName)
+		rows.Scan(&schema, &tblName, &name, &uniq, &colName)
 		if len(tbl.Indices()) == 0 || tbl.lastIndex().Name() != name.String {
-			idx := NewIndex(tbl.Schema(), tbl.Name(), name.String, uniq.String == "YES")
+			idx := NewIndex(schema.String, tblName.String, name.String, uniq.String == "YES")
 			tbl.AddIndex(&idx)
 		}
 		col, err := tbl.FindColumn(colName.String)

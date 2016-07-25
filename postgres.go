@@ -16,7 +16,8 @@ func (p postgres) Connect(ds DataSource) (*sql.DB, error) {
 
 func (p postgres) AllTableNamesSQL() string {
 	return `
-SELECT t.tablename AS table_name
+SELECT t.schemaname AS schema
+     , t.tablename AS table_name
      , d.description AS table_comment
 FROM pg_catalog.pg_tables t
 LEFT OUTER JOIN pg_catalog.pg_class c1
@@ -30,7 +31,8 @@ ORDER BY t.tablename`
 
 func (p postgres) TableNamesSQL() string {
 	return `
-SELECT t.tablename AS table_name
+SELECT t.schemaname AS schema
+     , t.tablename AS table_name
      , d.description AS table_comment
 FROM pg_catalog.pg_tables t
 LEFT OUTER JOIN pg_catalog.pg_class c1
@@ -45,7 +47,8 @@ ORDER BY t.tablename`
 
 func (p postgres) TableSQL() string {
 	return `
-SELECT cls.relname AS table_name
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
      , td.description AS table_comment
      , att.attname AS column_name
      , cd.description AS column_comment
@@ -97,9 +100,10 @@ AND   cls.relname = $2
 ORDER BY col.ordinal_position`
 }
 
-func (p postgres) IndexSQL() string {
+func (p postgres) IndicesSQL() string {
 	return `
-SELECT col.table_name
+SELECT idxs.schemaname AS schema
+     , col.table_name
      , idxs.indexname AS index_name
      , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
      , col.column_name
