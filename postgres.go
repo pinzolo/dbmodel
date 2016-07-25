@@ -47,7 +47,8 @@ ORDER BY t.tablename`
 
 func (p postgres) TableSQL() string {
 	return `
-SELECT cls.relname AS table_name
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
      , td.description AS table_comment
      , att.attname AS column_name
      , cd.description AS column_comment
