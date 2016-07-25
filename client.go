@@ -102,7 +102,6 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 }
 
 // Table returns table meta data.
-// Return value contains table name and column meta data.
 // If schema is empty, raise ErrSchemaEmpty.
 // If name is empaty, raise ErrTableNameEmpty.
 func (c *Client) Table(schema string, name string) (*Table, error) {
@@ -128,6 +127,30 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	c.appendForeignKyes(tbl)
 	c.appendReferencedKyes(tbl)
 	return tbl, nil
+}
+
+// AllTables returns table meta data list that are contained in given schema.
+// If schema is empty, raise ErrSchemaEmpty.
+func (c *Client) AllTables(schema string) ([]*Table, error) {
+	if err := c.preCheck(schema); err != nil {
+		return nil, err
+	}
+
+	rows, err := c.db.Query(c.provider.AllTablesSQL(), schema)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tbls := c.readTables(rows)
+	tblMap := make(map[string]*Table)
+	for _, tbl := range tbls {
+		tblMap[tbl.Name()] = tbl
+	}
+	c.distributeIndices(schema, tblMap)
+	c.distributeForeignKeys(schema, tblMap)
+	c.distributeReferencedKeys(schema, tblMap)
+	return tbls, nil
 }
 
 func (c *Client) preCheck(schema string) error {
@@ -222,11 +245,41 @@ func (c *Client) appendIndices(tbl *Table) error {
 			idx := NewIndex(schema.String, tblName.String, name.String, uniq.String == "YES")
 			tbl.AddIndex(&idx)
 		}
-		col, err := tbl.FindColumn(colName.String)
-		if err != nil {
-			return err
+		col, ok := tbl.FindColumn(colName.String)
+		if ok {
+			tbl.lastIndex().AddColumn(col)
 		}
-		tbl.lastIndex().AddColumn(col)
+	}
+	return nil
+}
+
+func (c *Client) distributeIndices(schema string, tblMap map[string]*Table) error {
+	rows, err := c.db.Query(c.provider.AllIndicesSQL(), schema)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			schema  sql.NullString
+			tblName sql.NullString
+			name    sql.NullString
+			uniq    sql.NullString
+			colName sql.NullString
+		)
+		rows.Scan(&schema, &tblName, &name, &uniq, &colName)
+		tbl, tblOK := tblMap[tblName.String]
+		if tblOK {
+			idx, idxOK := tbl.FindIndex(name.String)
+			if !idxOK {
+				i := NewIndex(schema.String, tblName.String, name.String, uniq.String == "YES")
+				idx = &i
+				tbl.AddIndex(idx)
+			}
+			col, colOK := tbl.FindColumn(colName.String)
+			if colOK {
+				idx.AddColumn(col)
+			}
+		}
 	}
 	return nil
 }
@@ -251,17 +304,55 @@ func (c *Client) appendForeignKyes(tbl *Table) error {
 			fk := NewForeignKey(schema.String, tblName.String, name.String)
 			tbl.AddForeignKey(&fk)
 		}
-		col, err := tbl.FindColumn(colName.String)
-		if err != nil {
-			return err
+		col, ok := tbl.FindColumn(colName.String)
+		if ok {
+			fCol := &Column{
+				schema:    fSchema.String,
+				tableName: fTblName.String,
+				name:      fColName.String,
+			}
+			cr := NewColumnReference(col, fCol)
+			tbl.lastForeignKey().AddColumnReference(&cr)
 		}
-		fCol := &Column{
-			schema:    fSchema.String,
-			tableName: fTblName.String,
-			name:      fColName.String,
+	}
+	return nil
+}
+
+func (c *Client) distributeForeignKeys(schema string, tblMap map[string]*Table) error {
+	rows, err := c.db.Query(c.provider.AllForeignKeysSQL(), schema)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			name     sql.NullString
+			schema   sql.NullString
+			tblName  sql.NullString
+			colName  sql.NullString
+			fSchema  sql.NullString
+			fTblName sql.NullString
+			fColName sql.NullString
+		)
+		rows.Scan(&name, &schema, &tblName, &colName, &fSchema, &fTblName, &fColName)
+		tbl, tblOK := tblMap[tblName.String]
+		if tblOK {
+			fk, fkOK := tbl.FindForeignKey(name.String)
+			if !fkOK {
+				f := NewForeignKey(schema.String, tblName.String, name.String)
+				fk = &f
+				tbl.AddForeignKey(fk)
+			}
+			col, colOK := tbl.FindColumn(colName.String)
+			if colOK {
+				fCol := &Column{
+					schema:    fSchema.String,
+					tableName: fTblName.String,
+					name:      fColName.String,
+				}
+				cr := NewColumnReference(col, fCol)
+				fk.AddColumnReference(&cr)
+			}
 		}
-		cr := NewColumnReference(col, fCol)
-		tbl.lastForeignKey().AddColumnReference(&cr)
 	}
 	return nil
 }
@@ -291,12 +382,50 @@ func (c *Client) appendReferencedKyes(tbl *Table) error {
 			tableName: tblName.String,
 			name:      colName.String,
 		}
-		fCol, err := tbl.FindColumn(fColName.String)
-		if err != nil {
-			return err
+		fCol, ok := tbl.FindColumn(fColName.String)
+		if ok {
+			cr := NewColumnReference(col, fCol)
+			tbl.lastRefKey().AddColumnReference(&cr)
 		}
-		cr := NewColumnReference(col, fCol)
-		tbl.lastRefKey().AddColumnReference(&cr)
+	}
+	return nil
+}
+
+func (c *Client) distributeReferencedKeys(schema string, tblMap map[string]*Table) error {
+	rows, err := c.db.Query(c.provider.AllReferencedKeysSQL(), schema)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			name     sql.NullString
+			schema   sql.NullString
+			tblName  sql.NullString
+			colName  sql.NullString
+			fSchema  sql.NullString
+			fTblName sql.NullString
+			fColName sql.NullString
+		)
+		rows.Scan(&name, &schema, &tblName, &colName, &fSchema, &fTblName, &fColName)
+		tbl, tblOK := tblMap[fTblName.String]
+		if tblOK {
+			rk, rkOK := tbl.FindReferencedKey(name.String)
+			if !rkOK {
+				r := NewForeignKey(schema.String, tblName.String, name.String)
+				rk = &r
+				tbl.AddReferencedKey(rk)
+			}
+			col := &Column{
+				schema:    schema.String,
+				tableName: tblName.String,
+				name:      colName.String,
+			}
+			fCol, fColOK := tbl.FindColumn(fColName.String)
+			if fColOK {
+				cr := NewColumnReference(col, fCol)
+				rk.AddColumnReference(&cr)
+			}
+		}
 	}
 	return nil
 }

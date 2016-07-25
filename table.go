@@ -1,7 +1,5 @@
 package dbmodel
 
-import "fmt"
-
 // Table stores table meta data.
 type Table struct {
 	schema      string
@@ -87,18 +85,48 @@ func (t *Table) AddReferencedKey(rk *ForeignKey) {
 	t.refKeys = append(t.refKeys, rk)
 }
 
-// FindColumn returns column that name is same as argument.
-func (t *Table) FindColumn(name string) (*Column, error) {
+// FindColumn returns column that has same name as argument.
+// If column that has same name does not exist, return false as second value.
+func (t *Table) FindColumn(name string) (*Column, bool) {
 	for _, col := range t.Columns() {
 		if col.Name() == name {
-			return col, nil
+			return col, true
 		}
 	}
-	return nil, fmt.Errorf("Column '%v' is not found in '%v' table.", name, t.Name())
+	return nil, false
 }
 
-func (t *Table) lastColumn() *Column {
-	return t.columns[len(t.columns)-1]
+// FindIndex returns index that has same name as argument.
+// If index that has same name does not exist, return false as second value.
+func (t *Table) FindIndex(name string) (*Index, bool) {
+	for _, idx := range t.Indices() {
+		if idx.Name() == name {
+			return idx, true
+		}
+	}
+	return nil, false
+}
+
+// FindForeignKey returns index that has same name as argument.
+// If foreign key that has same name does not exist, return false as second value.
+func (t *Table) FindForeignKey(name string) (*ForeignKey, bool) {
+	for _, fk := range t.ForeignKeys() {
+		if fk.Name() == name {
+			return fk, true
+		}
+	}
+	return nil, false
+}
+
+// FindReferencedKey returns index that has same name as argument.
+// If referenced key that has same name does not exist, return false as second value.
+func (t *Table) FindReferencedKey(name string) (*ForeignKey, bool) {
+	for _, rk := range t.ReferencedKeys() {
+		if rk.Name() == name {
+			return rk, true
+		}
+	}
+	return nil, false
 }
 
 func (t *Table) lastIndex() *Index {
