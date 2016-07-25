@@ -100,7 +100,7 @@ AND   cls.relname = $2
 ORDER BY col.ordinal_position`
 }
 
-func (p postgres) IndexSQL() string {
+func (p postgres) IndicesSQL() string {
 	return `
 SELECT idxs.schemaname AS schema
      , col.table_name

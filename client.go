@@ -202,7 +202,7 @@ func (c *Client) readTables(rows *sql.Rows) []*Table {
 }
 
 func (c *Client) fillTableIndices(tbls []*Table) error {
-	stmt, err := c.db.Prepare(c.provider.IndexSQL())
+	stmt, err := c.db.Prepare(c.provider.IndicesSQL())
 	if err != nil {
 		return err
 	}
