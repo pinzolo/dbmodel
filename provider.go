@@ -128,5 +128,6 @@ type Provider interface {
 	//     1. foreign key name
 	//     2. column position (to)
 	ReferencedKeysSQL() string
+	AllConstrantsSQL() string
 	ConstrantsSQL() string
 }
