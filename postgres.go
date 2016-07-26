@@ -52,12 +52,14 @@ SELECT ns.nspname AS schema
      , td.description AS table_comment
      , att.attname AS column_name
      , cd.description AS column_comment
-     , COALESCE(col.domain_schema || '.' || col.domain_name, col.udt_name) AS data_type
-     , col.character_maximum_length AS length
-     , COALESCE(col.numeric_precision, col.datetime_precision) AS precision
-     , col.numeric_scale AS scale
-     , col.is_nullable AS nullable
-     , col.column_default AS defaul_value
+     , att.data_type
+     , information_schema._pg_char_max_length(att.typid, att.typmod) AS length
+     , COALESCE(
+           information_schema._pg_numeric_precision(att.typid, att.typmod)
+         , information_schema._pg_datetime_precision(att.typid, att.typmod)) AS precision
+     , information_schema._pg_numeric_scale(att.typid, att.typmod) AS scale
+     , CASE WHEN att.attnotnull THEN 'NO' ELSE 'YES' END AS nullable
+     , def.adsrc AS defaul_value
      , pk.pos AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
@@ -65,16 +67,28 @@ ON  cls.relnamespace = ns.oid
 LEFT OUTER JOIN pg_catalog.pg_description td
 ON  cls.oid = td.objoid
 AND td.objsubid = 0
-INNER JOIN pg_catalog.pg_attribute att
+INNER JOIN (
+    SELECT a.attrelid
+         , a.attname
+         , a.attnum
+         , a.attnotnull
+         , CASE WHEN t.typtype = 'd' THEN tn.nspname || '.' || t.typname ELSE t.typname END AS data_type
+         , information_schema._pg_truetypid(a.*, t.*) AS typid
+         , information_schema._pg_truetypmod(a.*, t.*) AS typmod
+    FROM pg_catalog.pg_attribute a
+    INNER JOIN pg_catalog.pg_type t
+    ON t.oid = a.atttypid
+    INNER JOIN pg_catalog.pg_namespace tn
+    ON t.typnamespace = tn.oid
+    WHERE a.attnum > 0
+) att
 ON  att.attrelid = cls.oid
-AND att.attnum > 0
+LEFT OUTER JOIN pg_catalog.pg_attrdef def
+ON  def.adrelid = att.attrelid
+AND def.adnum = att.attnum
 LEFT OUTER JOIN pg_catalog.pg_description cd
 ON  cls.oid = cd.objoid
 AND att.attnum = cd.objsubid
-INNER JOIN information_schema.columns col
-ON  col.table_schema = ns.nspname
-AND col.table_name = cls.relname
-AND col.column_name = att.attname
 LEFT OUTER JOIN (
     SELECT conrelid
          , conname
@@ -98,12 +112,14 @@ SELECT ns.nspname AS schema
      , td.description AS table_comment
      , att.attname AS column_name
      , cd.description AS column_comment
-     , COALESCE(col.domain_schema || '.' || col.domain_name, col.udt_name) AS data_type
-     , col.character_maximum_length AS length
-     , COALESCE(col.numeric_precision, col.datetime_precision) AS precision
-     , col.numeric_scale AS scale
-     , col.is_nullable AS nullable
-     , col.column_default AS defaul_value
+     , att.data_type
+     , information_schema._pg_char_max_length(att.typid, att.typmod) AS length
+     , COALESCE(
+           information_schema._pg_numeric_precision(att.typid, att.typmod)
+         , information_schema._pg_datetime_precision(att.typid, att.typmod)) AS precision
+     , information_schema._pg_numeric_scale(att.typid, att.typmod) AS scale
+     , CASE WHEN att.attnotnull THEN 'NO' ELSE 'YES' END AS nullable
+     , def.adsrc AS defaul_value
      , pk.pos AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
@@ -111,16 +127,28 @@ ON  cls.relnamespace = ns.oid
 LEFT OUTER JOIN pg_catalog.pg_description td
 ON  cls.oid = td.objoid
 AND td.objsubid = 0
-INNER JOIN pg_catalog.pg_attribute att
-ON  cls.oid = att.attrelid
-AND att.attnum > 0
+INNER JOIN (
+    SELECT a.attrelid
+         , a.attname
+         , a.attnum
+         , a.attnotnull
+         , CASE WHEN t.typtype = 'd' THEN tn.nspname || '.' || t.typname ELSE t.typname END AS data_type
+         , information_schema._pg_truetypid(a.*, t.*) AS typid
+         , information_schema._pg_truetypmod(a.*, t.*) AS typmod
+    FROM pg_catalog.pg_attribute a
+    INNER JOIN pg_catalog.pg_type t
+    ON t.oid = a.atttypid
+    INNER JOIN pg_catalog.pg_namespace tn
+    ON t.typnamespace = tn.oid
+    WHERE a.attnum > 0
+) att
+ON  att.attrelid = cls.oid
+LEFT OUTER JOIN pg_catalog.pg_attrdef def
+ON  def.adrelid = att.attrelid
+AND def.adnum = att.attnum
 LEFT OUTER JOIN pg_catalog.pg_description cd
 ON  cls.oid = cd.objoid
 AND att.attnum = cd.objsubid
-INNER JOIN information_schema.columns col
-ON  col.table_schema = ns.nspname
-AND col.table_name = cls.relname
-AND col.column_name = att.attname
 LEFT OUTER JOIN (
     SELECT conrelid
          , conname
@@ -133,7 +161,7 @@ ON  pk.conrelid = cls.oid
 AND att.attnum = pk.colnums[pk.pos]
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
-ORDER BY cls.relname, col.ordinal_position`
+ORDER BY cls.relname, att.attnum`
 }
 
 func (p postgres) IndicesSQL() string {
