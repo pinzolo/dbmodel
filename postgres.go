@@ -58,7 +58,7 @@ SELECT ns.nspname AS schema
      , col.numeric_scale AS scale
      , col.is_nullable AS nullable
      , col.column_default AS defaul_value
-     , pk.ordinal_position AS primary_key_position
+     , pk.pos AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
 ON  cls.relnamespace = ns.oid
@@ -76,24 +76,15 @@ ON  col.table_schema = ns.nspname
 AND col.table_name = cls.relname
 AND col.column_name = att.attname
 LEFT OUTER JOIN (
-    SELECT tc.table_schema
-         , tc.table_name
-         , kcu.column_name
-         , kcu.ordinal_position
-    FROM information_schema.table_constraints tc
-    INNER JOIN information_schema.key_column_usage kcu
-    ON  kcu.constraint_catalog = tc.constraint_catalog
-    AND kcu.constraint_schema = tc.constraint_schema
-    AND kcu.constraint_name = tc.constraint_name
-    WHERE tc.constraint_type = 'PRIMARY KEY'
-    AND   tc.table_schema = $1
-    AND   tc.table_name = $2
-    AND   kcu.table_schema = $1
-    AND   kcu.table_name = $2
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'p'
 ) pk
-ON  pk.table_schema = col.table_schema
-AND pk.table_name = col.table_name
-AND pk.column_name = col.column_name
+ON  pk.conrelid = cls.oid
+AND att.attnum = pk.colnums[pk.pos]
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
 AND   cls.relname = $2
@@ -113,7 +104,7 @@ SELECT ns.nspname AS schema
      , col.numeric_scale AS scale
      , col.is_nullable AS nullable
      , col.column_default AS defaul_value
-     , pk.ordinal_position AS primary_key_position
+     , pk.pos AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
 ON  cls.relnamespace = ns.oid
@@ -131,22 +122,15 @@ ON  col.table_schema = ns.nspname
 AND col.table_name = cls.relname
 AND col.column_name = att.attname
 LEFT OUTER JOIN (
-    SELECT tc.table_schema
-         , tc.table_name
-         , kcu.column_name
-         , kcu.ordinal_position
-    FROM information_schema.table_constraints tc
-    INNER JOIN information_schema.key_column_usage kcu
-    ON  kcu.constraint_catalog = tc.constraint_catalog
-    AND kcu.constraint_schema = tc.constraint_schema
-    AND kcu.constraint_name = tc.constraint_name
-    WHERE tc.constraint_type = 'PRIMARY KEY'
-    AND   tc.table_schema = $1
-    AND   kcu.table_schema = $1
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'p'
 ) pk
-ON  pk.table_schema = col.table_schema
-AND pk.table_name = col.table_name
-AND pk.column_name = col.column_name
+ON  pk.conrelid = cls.oid
+AND att.attnum = pk.colnums[pk.pos]
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
 ORDER BY cls.relname, col.ordinal_position`
