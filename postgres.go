@@ -66,7 +66,7 @@ LEFT OUTER JOIN pg_catalog.pg_description td
 ON  cls.oid = td.objoid
 AND td.objsubid = 0
 INNER JOIN pg_catalog.pg_attribute att
-ON  cls.oid = att.attrelid
+ON  att.attrelid = cls.oid
 AND att.attnum > 0
 LEFT OUTER JOIN pg_catalog.pg_description cd
 ON  cls.oid = cd.objoid
@@ -97,7 +97,7 @@ AND pk.column_name = col.column_name
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
 AND   cls.relname = $2
-ORDER BY cls.relname, col.ordinal_position`
+ORDER BY cls.relname, att.attnum`
 }
 
 func (p postgres) AllTablesSQL() string {
@@ -175,7 +175,7 @@ INNER JOIN pg_catalog.pg_class icls
 ON icls.oid = idx.index_oid
 JOIN pg_catalog.pg_attribute att
 ON  att.attrelid = tcls.oid
-AND att.attnum = idx.colnums[pos]
+AND att.attnum = idx.colnums[idx.pos]
 WHERE ns.nspname = $1
 AND   tcls.relname = $2
 ORDER BY tcls.relname, icls.relname, idx.pos`
@@ -204,7 +204,7 @@ INNER JOIN pg_catalog.pg_class icls
 ON icls.oid = idx.index_oid
 JOIN pg_catalog.pg_attribute att
 ON  att.attrelid = tcls.oid
-AND att.attnum = idx.colnums[pos]
+AND att.attnum = idx.colnums[idx.pos]
 WHERE ns.nspname = $1
 ORDER BY tcls.relname, icls.relname, idx.pos`
 }
@@ -453,7 +453,7 @@ JOIN pg_catalog.pg_namespace ns
 ON ns.oid = cls.relnamespace
 JOIN pg_catalog.pg_attribute att
 ON att.attrelid = cls.oid
-AND att.attnum = cns.colnums[pos]
+AND att.attnum = cns.colnums[cns.pos]
 WHERE ns.nspname = $1
 AND   cls.relname = $2
 GROUP BY 1, 2, 3
@@ -495,7 +495,7 @@ JOIN pg_catalog.pg_namespace ns
 ON ns.oid = cls.relnamespace
 JOIN pg_catalog.pg_attribute att
 ON att.attrelid = cls.oid
-AND att.attnum = cns.colnums[pos]
+AND att.attnum = cns.colnums[cns.pos]
 JOIN pg_catalog.pg_operator op
 ON op.oid = cns.opids[pos]
 WHERE ns.nspname = $1
@@ -520,7 +520,7 @@ JOIN pg_catalog.pg_namespace ns
 ON ns.oid = cls.relnamespace
 JOIN pg_catalog.pg_attribute att
 ON att.attrelid = cls.oid
-AND att.attnum = cns.colnums[pos]
+AND att.attnum = cns.colnums[cns.pos]
 WHERE ns.nspname = $1
 GROUP BY 1, 2, 3
 ORDER BY table_name, constraint_kind, constraint_name`
