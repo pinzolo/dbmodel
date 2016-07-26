@@ -9,6 +9,7 @@ type Table struct {
 	indices     []*Index
 	foreignKeys []*ForeignKey
 	refKeys     []*ForeignKey
+	constraints []*Constraint
 }
 
 // Schema returns table schema.
@@ -46,6 +47,11 @@ func (t Table) ReferencedKeys() []*ForeignKey {
 	return t.refKeys
 }
 
+// Constraints returns having constraints.
+func (t Table) Constraints() []*Constraint {
+	return t.constraints
+}
+
 // NewTable returns new Table initialized with arguments.
 func NewTable(schema string, tableName string, comment string) Table {
 	return Table{
@@ -56,6 +62,7 @@ func NewTable(schema string, tableName string, comment string) Table {
 		indices:     make([]*Index, 0, 5),
 		foreignKeys: make([]*ForeignKey, 0, 5),
 		refKeys:     make([]*ForeignKey, 0, 5),
+		constraints: make([]*Constraint, 0, 5),
 	}
 }
 
@@ -83,6 +90,13 @@ func (t *Table) AddForeignKey(fk *ForeignKey) {
 // AddReferencedKey appends other table's foreign key that reference this table's column to ReferencedKeys.
 func (t *Table) AddReferencedKey(rk *ForeignKey) {
 	t.refKeys = append(t.refKeys, rk)
+}
+
+// AddConstraint appends foreign key to Constraints.
+func (t *Table) AddConstraint(c *Constraint) {
+	c.schema = t.schema
+	c.tableName = t.name
+	t.constraints = append(t.constraints, c)
 }
 
 // FindColumn returns column that has same name as argument.

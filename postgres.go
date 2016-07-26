@@ -52,52 +52,57 @@ SELECT ns.nspname AS schema
      , td.description AS table_comment
      , att.attname AS column_name
      , cd.description AS column_comment
-     , COALESCE(col.domain_schema || '.' || col.domain_name, col.udt_name) AS data_type
-     , col.character_maximum_length AS length
-     , COALESCE(col.numeric_precision, col.datetime_precision) AS precision
-     , col.numeric_scale AS scale
-     , col.is_nullable AS nullable
-     , col.column_default AS defaul_value
-     , pk.ordinal_position AS primary_key_position
+     , att.data_type
+     , information_schema._pg_char_max_length(att.typid, att.typmod) AS length
+     , COALESCE(
+           information_schema._pg_numeric_precision(att.typid, att.typmod)
+         , information_schema._pg_datetime_precision(att.typid, att.typmod)) AS precision
+     , information_schema._pg_numeric_scale(att.typid, att.typmod) AS scale
+     , CASE WHEN att.attnotnull THEN 'NO' ELSE 'YES' END AS nullable
+     , def.adsrc AS defaul_value
+     , pk.pos AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
 ON  cls.relnamespace = ns.oid
 LEFT OUTER JOIN pg_catalog.pg_description td
 ON  cls.oid = td.objoid
 AND td.objsubid = 0
-INNER JOIN pg_catalog.pg_attribute att
-ON  cls.oid = att.attrelid
-AND att.attnum > 0
+INNER JOIN (
+    SELECT a.attrelid
+         , a.attname
+         , a.attnum
+         , a.attnotnull
+         , CASE WHEN t.typtype = 'd' THEN tn.nspname || '.' || t.typname ELSE t.typname END AS data_type
+         , information_schema._pg_truetypid(a.*, t.*) AS typid
+         , information_schema._pg_truetypmod(a.*, t.*) AS typmod
+    FROM pg_catalog.pg_attribute a
+    INNER JOIN pg_catalog.pg_type t
+    ON t.oid = a.atttypid
+    INNER JOIN pg_catalog.pg_namespace tn
+    ON t.typnamespace = tn.oid
+    WHERE a.attnum > 0
+) att
+ON  att.attrelid = cls.oid
+LEFT OUTER JOIN pg_catalog.pg_attrdef def
+ON  def.adrelid = att.attrelid
+AND def.adnum = att.attnum
 LEFT OUTER JOIN pg_catalog.pg_description cd
 ON  cls.oid = cd.objoid
 AND att.attnum = cd.objsubid
-INNER JOIN information_schema.columns col
-ON  col.table_schema = ns.nspname
-AND col.table_name = cls.relname
-AND col.column_name = att.attname
 LEFT OUTER JOIN (
-    SELECT tc.table_schema
-         , tc.table_name
-         , kcu.column_name
-         , kcu.ordinal_position
-    FROM information_schema.table_constraints tc
-    INNER JOIN information_schema.key_column_usage kcu
-    ON  kcu.constraint_catalog = tc.constraint_catalog
-    AND kcu.constraint_schema = tc.constraint_schema
-    AND kcu.constraint_name = tc.constraint_name
-    WHERE tc.constraint_type = 'PRIMARY KEY'
-    AND   tc.table_schema = $1
-    AND   tc.table_name = $2
-    AND   kcu.table_schema = $1
-    AND   kcu.table_name = $2
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'p'
 ) pk
-ON  pk.table_schema = col.table_schema
-AND pk.table_name = col.table_name
-AND pk.column_name = col.column_name
+ON  pk.conrelid = cls.oid
+AND att.attnum = pk.colnums[pk.pos]
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
 AND   cls.relname = $2
-ORDER BY cls.relname, col.ordinal_position`
+ORDER BY cls.relname, att.attnum`
 }
 
 func (p postgres) AllTablesSQL() string {
@@ -107,108 +112,113 @@ SELECT ns.nspname AS schema
      , td.description AS table_comment
      , att.attname AS column_name
      , cd.description AS column_comment
-     , COALESCE(col.domain_schema || '.' || col.domain_name, col.udt_name) AS data_type
-     , col.character_maximum_length AS length
-     , COALESCE(col.numeric_precision, col.datetime_precision) AS precision
-     , col.numeric_scale AS scale
-     , col.is_nullable AS nullable
-     , col.column_default AS defaul_value
-     , pk.ordinal_position AS primary_key_position
+     , att.data_type
+     , information_schema._pg_char_max_length(att.typid, att.typmod) AS length
+     , COALESCE(
+           information_schema._pg_numeric_precision(att.typid, att.typmod)
+         , information_schema._pg_datetime_precision(att.typid, att.typmod)) AS precision
+     , information_schema._pg_numeric_scale(att.typid, att.typmod) AS scale
+     , CASE WHEN att.attnotnull THEN 'NO' ELSE 'YES' END AS nullable
+     , def.adsrc AS defaul_value
+     , pk.pos AS primary_key_position
 FROM pg_catalog.pg_class cls
 INNER JOIN pg_catalog.pg_namespace ns
 ON  cls.relnamespace = ns.oid
 LEFT OUTER JOIN pg_catalog.pg_description td
 ON  cls.oid = td.objoid
 AND td.objsubid = 0
-INNER JOIN pg_catalog.pg_attribute att
-ON  cls.oid = att.attrelid
-AND att.attnum > 0
+INNER JOIN (
+    SELECT a.attrelid
+         , a.attname
+         , a.attnum
+         , a.attnotnull
+         , CASE WHEN t.typtype = 'd' THEN tn.nspname || '.' || t.typname ELSE t.typname END AS data_type
+         , information_schema._pg_truetypid(a.*, t.*) AS typid
+         , information_schema._pg_truetypmod(a.*, t.*) AS typmod
+    FROM pg_catalog.pg_attribute a
+    INNER JOIN pg_catalog.pg_type t
+    ON t.oid = a.atttypid
+    INNER JOIN pg_catalog.pg_namespace tn
+    ON t.typnamespace = tn.oid
+    WHERE a.attnum > 0
+) att
+ON  att.attrelid = cls.oid
+LEFT OUTER JOIN pg_catalog.pg_attrdef def
+ON  def.adrelid = att.attrelid
+AND def.adnum = att.attnum
 LEFT OUTER JOIN pg_catalog.pg_description cd
 ON  cls.oid = cd.objoid
 AND att.attnum = cd.objsubid
-INNER JOIN information_schema.columns col
-ON  col.table_schema = ns.nspname
-AND col.table_name = cls.relname
-AND col.column_name = att.attname
 LEFT OUTER JOIN (
-    SELECT tc.table_schema
-         , tc.table_name
-         , kcu.column_name
-         , kcu.ordinal_position
-    FROM information_schema.table_constraints tc
-    INNER JOIN information_schema.key_column_usage kcu
-    ON  kcu.constraint_catalog = tc.constraint_catalog
-    AND kcu.constraint_schema = tc.constraint_schema
-    AND kcu.constraint_name = tc.constraint_name
-    WHERE tc.constraint_type = 'PRIMARY KEY'
-    AND   tc.table_schema = $1
-    AND   kcu.table_schema = $1
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'p'
 ) pk
-ON  pk.table_schema = col.table_schema
-AND pk.table_name = col.table_name
-AND pk.column_name = col.column_name
+ON  pk.conrelid = cls.oid
+AND att.attnum = pk.colnums[pk.pos]
 WHERE cls.relkind = 'r'
 AND   ns.nspname = $1
-ORDER BY cls.relname, col.ordinal_position`
+ORDER BY cls.relname, att.attnum`
 }
 
 func (p postgres) IndicesSQL() string {
 	return `
-SELECT idxs.schemaname AS schema
-     , col.table_name
-     , idxs.indexname AS index_name
+SELECT ns.nspname AS schema
+     , tcls.relname AS table_name
+     , icls.relname AS index_name
      , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
-     , col.column_name
-FROM pg_catalog.pg_class cls
-INNER JOIN pg_catalog.pg_namespace ns
-ON  cls.relnamespace = ns.oid
-INNER JOIN pg_catalog.pg_indexes idxs
-ON  idxs.schemaname = ns.nspname
-AND idxs.indexname = cls.relname
-INNER JOIN (
-    SELECT indexrelid
+     , att.attname AS column_name
+FROM (
+    SELECT indexrelid AS index_oid
+         , indrelid AS table_oid
          , indisunique AS uniq
-         , string_to_array(indkey::text, ' ')::int[] AS column_positions
-         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS column_ordinal
+         , string_to_array(indkey::text, ' ')::int[] AS colnums
+         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS pos
     FROM pg_catalog.pg_index
 ) idx
-ON idx.indexrelid = cls.oid
-JOIN information_schema.columns col
-ON  col.table_schema = idxs.schemaname
-AND col.table_name = idxs.tablename
-AND col.ordinal_position = idx.column_positions[column_ordinal]
-WHERE idxs.schemaname = $1
-AND   idxs.tablename = $2
-ORDER BY table_name, idxs.indexname, idx.column_ordinal`
+INNER JOIN pg_catalog.pg_class tcls
+ON tcls.oid = idx.table_oid
+INNER JOIN pg_catalog.pg_namespace ns
+ON tcls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_class icls
+ON icls.oid = idx.index_oid
+JOIN pg_catalog.pg_attribute att
+ON  att.attrelid = tcls.oid
+AND att.attnum = idx.colnums[idx.pos]
+WHERE ns.nspname = $1
+AND   tcls.relname = $2
+ORDER BY tcls.relname, icls.relname, idx.pos`
 }
 
 func (p postgres) AllIndicesSQL() string {
 	return `
-SELECT idxs.schemaname AS schema
-     , col.table_name
-     , idxs.indexname AS index_name
+SELECT ns.nspname AS schema
+     , tcls.relname AS table_name
+     , icls.relname AS index_name
      , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
-     , col.column_name
-FROM pg_catalog.pg_class cls
-INNER JOIN pg_catalog.pg_namespace ns
-ON  cls.relnamespace = ns.oid
-INNER JOIN pg_catalog.pg_indexes idxs
-ON  idxs.schemaname = ns.nspname
-AND idxs.indexname = cls.relname
-INNER JOIN (
-    SELECT indexrelid
+     , att.attname AS column_name
+FROM (
+    SELECT indexrelid AS index_oid
+         , indrelid AS table_oid
          , indisunique AS uniq
-         , string_to_array(indkey::text, ' ')::int[] AS column_positions
-         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS column_ordinal
+         , string_to_array(indkey::text, ' ')::int[] AS colnums
+         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS pos
     FROM pg_catalog.pg_index
 ) idx
-ON idx.indexrelid = cls.oid
-JOIN information_schema.columns col
-ON  col.table_schema = idxs.schemaname
-AND col.table_name = idxs.tablename
-AND col.ordinal_position = idx.column_positions[column_ordinal]
-WHERE idxs.schemaname = $1
-ORDER BY table_name, idxs.indexname, idx.column_ordinal`
+INNER JOIN pg_catalog.pg_class tcls
+ON tcls.oid = idx.table_oid
+INNER JOIN pg_catalog.pg_namespace ns
+ON tcls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_class icls
+ON icls.oid = idx.index_oid
+JOIN pg_catalog.pg_attribute att
+ON  att.attrelid = tcls.oid
+AND att.attnum = idx.colnums[idx.pos]
+WHERE ns.nspname = $1
+ORDER BY tcls.relname, icls.relname, idx.pos`
 }
 
 func (p postgres) ForeignKeysSQL() string {
@@ -314,7 +324,7 @@ SELECT cns.conname AS referenced_key_name
 FROM (
     SELECT conname
          , conrelid AS relid
-         , conkey AS key
+         , conkey AS colnums
          , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
     FROM pg_catalog.pg_constraint
     WHERE contype = 'f'
@@ -325,11 +335,11 @@ INNER JOIN pg_catalog.pg_namespace ns
 ON cls.relnamespace = ns.oid
 INNER JOIN pg_catalog.pg_attribute att
 ON  att.attrelid = cls.oid
-AND att.attnum = cns.key[cns.pos]
+AND att.attnum = cns.colnums[cns.pos]
 JOIN (
     SELECT conname
          , confrelid AS relid
-         , confkey AS key
+         , confkey AS colnums
          , generate_series(1, length(array_to_string(confkey, ' ')) - length(array_to_string(confkey, '')) + 1) AS pos
     FROM pg_catalog.pg_constraint
     WHERE contype = 'f'
@@ -342,7 +352,7 @@ INNER JOIN pg_catalog.pg_namespace fns
 ON fcls.relnamespace = fns.oid
 INNER JOIN pg_catalog.pg_attribute fatt
 ON  fatt.attrelid = fcls.oid
-AND fatt.attnum = fcns.key[fcns.pos]
+AND fatt.attnum = fcns.colnums[fcns.pos]
 WHERE fns.nspname = $1
 AND   fcls.relname = $2
 ORDER BY fcls.relname, fcns.conname, fcns.pos`
@@ -360,7 +370,7 @@ SELECT cns.conname AS referenced_key_name
 FROM (
     SELECT conname
          , conrelid AS relid
-         , conkey AS key
+         , conkey AS colnums
          , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
     FROM pg_catalog.pg_constraint
     WHERE contype = 'f'
@@ -371,11 +381,11 @@ INNER JOIN pg_catalog.pg_namespace ns
 ON cls.relnamespace = ns.oid
 INNER JOIN pg_catalog.pg_attribute att
 ON  att.attrelid = cls.oid
-AND att.attnum = cns.key[cns.pos]
+AND att.attnum = cns.colnums[cns.pos]
 JOIN (
     SELECT conname
          , confrelid AS relid
-         , confkey AS key
+         , confkey AS colnums
          , generate_series(1, length(array_to_string(confkey, ' ')) - length(array_to_string(confkey, '')) + 1) AS pos
     FROM pg_catalog.pg_constraint
     WHERE contype = 'f'
@@ -388,9 +398,144 @@ INNER JOIN pg_catalog.pg_namespace fns
 ON fcls.relnamespace = fns.oid
 INNER JOIN pg_catalog.pg_attribute fatt
 ON  fatt.attrelid = fcls.oid
-AND fatt.attnum = fcns.key[fcns.pos]
+AND fatt.attnum = fcns.colnums[fcns.pos]
 WHERE fns.nspname = $1
 ORDER BY fcls.relname, fcns.conname, fcns.pos`
+}
+
+func (p postgres) ConstraintsSQL() string {
+	return `
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'CHECK' AS constraint_kind
+     , cns.consrc AS constraint_content
+FROM pg_catalog.pg_constraint cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+WHERE cns.contype = 'c'
+AND   ns.nspname = $1
+AND   cls.relname = $2
+UNION
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'EXCLUDE' AS constraint_kind
+     , array_to_string(array_agg(att.attname || ' WITH ' || op.oprname), ', ') AS constraint_content
+FROM (
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , conexclop AS opids
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'x'
+) cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+JOIN pg_catalog.pg_attribute att
+ON att.attrelid = cls.oid
+AND att.attnum = cns.colnums[cns.pos]
+JOIN pg_catalog.pg_operator op
+ON op.oid = cns.opids[cns.pos]
+WHERE ns.nspname = $1
+AND   cls.relname = $2
+GROUP BY 1, 2, 3
+UNION
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'UNIQUE' AS constraint_kind
+     , array_to_string(array_agg(att.attname), ', ') AS constraint_content
+FROM (
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'u'
+) cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+JOIN pg_catalog.pg_attribute att
+ON att.attrelid = cls.oid
+AND att.attnum = cns.colnums[cns.pos]
+WHERE ns.nspname = $1
+AND   cls.relname = $2
+GROUP BY 1, 2, 3
+ORDER BY table_name, constraint_kind, constraint_name`
+}
+
+func (p postgres) AllConstraintsSQL() string {
+	return `
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'CHECK' AS constraint_kind
+     , cns.consrc AS constraint_content
+FROM pg_catalog.pg_constraint cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+WHERE cns.contype = 'c'
+AND   ns.nspname = $1
+UNION
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'EXCLUDE' AS constraint_kind
+     , array_to_string(array_agg(att.attname || ' WITH ' || op.oprname), ', ') AS constraint_content
+FROM (
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , conexclop AS opids
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'x'
+) cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+JOIN pg_catalog.pg_attribute att
+ON att.attrelid = cls.oid
+AND att.attnum = cns.colnums[cns.pos]
+JOIN pg_catalog.pg_operator op
+ON op.oid = cns.opids[cns.pos]
+WHERE ns.nspname = $1
+GROUP BY 1, 2, 3
+UNION
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'UNIQUE' AS constraint_kind
+     , array_to_string(array_agg(att.attname), ', ') AS constraint_content
+FROM (
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'u'
+) cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+JOIN pg_catalog.pg_attribute att
+ON att.attrelid = cls.oid
+AND att.attnum = cns.colnums[cns.pos]
+WHERE ns.nspname = $1
+GROUP BY 1, 2, 3
+ORDER BY table_name, constraint_kind, constraint_name`
 }
 
 func (p postgres) dataSourceName(ds DataSource) string {

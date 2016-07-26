@@ -122,6 +122,26 @@ func TestFindColumn(t *testing.T) {
 	}
 }
 
+func TestAddConstraintToTable(t *testing.T) {
+	tbl := newUserTable()
+	col := Column{name: "age"}
+	tbl.AddColumn(&col)
+	if len(tbl.Constraints()) != 0 {
+		t.Error("If table has no constraint, Constraints() should be zero length.")
+	}
+	con := NewConstraint("", "", "users_age_check", "CHECK", "(age >= 0)")
+	tbl.AddConstraint(&con)
+	if len(tbl.Constraints()) != 1 {
+		t.Errorf("If table has a constraint, Constraints() should be 1 length. (%+v)", tbl.Constraints())
+	}
+	if tbl.Constraints()[0].Schema() != tbl.Schema() {
+		t.Errorf("Constraint's schema should be set by table's schema.")
+	}
+	if tbl.Constraints()[0].TableName() != tbl.Name() {
+		t.Errorf("Constraint's table name should be set by table's name.")
+	}
+}
+
 func newUserTable() *Table {
 	table := NewTable("foo", "users", "")
 	return &table
