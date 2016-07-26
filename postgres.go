@@ -393,6 +393,10 @@ WHERE fns.nspname = $1
 ORDER BY fcls.relname, fcns.conname, fcns.pos`
 }
 
+func (p postgres) ConstrantsSQL() string {
+	return ``
+}
+
 func (p postgres) dataSourceName(ds DataSource) string {
 	parts := make([]string, 0, 10)
 	if ds.Host != "" {
