@@ -154,61 +154,59 @@ ORDER BY cls.relname, col.ordinal_position`
 
 func (p postgres) IndicesSQL() string {
 	return `
-SELECT idxs.schemaname AS schema
-     , col.table_name
-     , idxs.indexname AS index_name
+SELECT ns.nspname AS schema
+     , tcls.relname AS table_name
+     , icls.relname AS index_name
      , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
-     , col.column_name
-FROM pg_catalog.pg_class cls
-INNER JOIN pg_catalog.pg_namespace ns
-ON  cls.relnamespace = ns.oid
-INNER JOIN pg_catalog.pg_indexes idxs
-ON  idxs.schemaname = ns.nspname
-AND idxs.indexname = cls.relname
-INNER JOIN (
-    SELECT indexrelid
+     , att.attname AS column_name
+FROM (
+    SELECT indexrelid AS index_oid
+         , indrelid AS table_oid
          , indisunique AS uniq
-         , string_to_array(indkey::text, ' ')::int[] AS column_positions
-         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS column_ordinal
+         , string_to_array(indkey::text, ' ')::int[] AS colnums
+         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS pos
     FROM pg_catalog.pg_index
 ) idx
-ON idx.indexrelid = cls.oid
-JOIN information_schema.columns col
-ON  col.table_schema = idxs.schemaname
-AND col.table_name = idxs.tablename
-AND col.ordinal_position = idx.column_positions[column_ordinal]
-WHERE idxs.schemaname = $1
-AND   idxs.tablename = $2
-ORDER BY table_name, idxs.indexname, idx.column_ordinal`
+INNER JOIN pg_catalog.pg_class tcls
+ON tcls.oid = idx.table_oid
+INNER JOIN pg_catalog.pg_namespace ns
+ON tcls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_class icls
+ON icls.oid = idx.index_oid
+JOIN pg_catalog.pg_attribute att
+ON  att.attrelid = tcls.oid
+AND att.attnum = idx.colnums[pos]
+WHERE ns.nspname = $1
+AND   tcls.relname = $2
+ORDER BY tcls.relname, icls.relname, idx.pos`
 }
 
 func (p postgres) AllIndicesSQL() string {
 	return `
-SELECT idxs.schemaname AS schema
-     , col.table_name
-     , idxs.indexname AS index_name
+SELECT ns.nspname AS schema
+     , tcls.relname AS table_name
+     , icls.relname AS index_name
      , CASE WHEN idx.uniq THEN 'YES' ELSE 'NO' END AS uniq
-     , col.column_name
-FROM pg_catalog.pg_class cls
-INNER JOIN pg_catalog.pg_namespace ns
-ON  cls.relnamespace = ns.oid
-INNER JOIN pg_catalog.pg_indexes idxs
-ON  idxs.schemaname = ns.nspname
-AND idxs.indexname = cls.relname
-INNER JOIN (
-    SELECT indexrelid
+     , att.attname AS column_name
+FROM (
+    SELECT indexrelid AS index_oid
+         , indrelid AS table_oid
          , indisunique AS uniq
-         , string_to_array(indkey::text, ' ')::int[] AS column_positions
-         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS column_ordinal
+         , string_to_array(indkey::text, ' ')::int[] AS colnums
+         , generate_series(1, length(indkey::text) - length(replace(indkey::text, ' ', '')) + 1) AS pos
     FROM pg_catalog.pg_index
 ) idx
-ON idx.indexrelid = cls.oid
-JOIN information_schema.columns col
-ON  col.table_schema = idxs.schemaname
-AND col.table_name = idxs.tablename
-AND col.ordinal_position = idx.column_positions[column_ordinal]
-WHERE idxs.schemaname = $1
-ORDER BY table_name, idxs.indexname, idx.column_ordinal`
+INNER JOIN pg_catalog.pg_class tcls
+ON tcls.oid = idx.table_oid
+INNER JOIN pg_catalog.pg_namespace ns
+ON tcls.relnamespace = ns.oid
+INNER JOIN pg_catalog.pg_class icls
+ON icls.oid = idx.index_oid
+JOIN pg_catalog.pg_attribute att
+ON  att.attrelid = tcls.oid
+AND att.attnum = idx.colnums[pos]
+WHERE ns.nspname = $1
+ORDER BY tcls.relname, icls.relname, idx.pos`
 }
 
 func (p postgres) ForeignKeysSQL() string {
