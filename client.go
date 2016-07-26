@@ -126,6 +126,7 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 	c.setIndices(tbl)
 	c.setForeignKyes(tbl)
 	c.setReferencedKyes(tbl)
+	c.setConstraints(tbl)
 	return tbl, nil
 }
 
@@ -150,6 +151,7 @@ func (c *Client) AllTables(schema string) ([]*Table, error) {
 	c.distributeIndices(schema, tblMap)
 	c.distributeForeignKeys(schema, tblMap)
 	c.distributeReferencedKeys(schema, tblMap)
+	c.distributeConstraints(schema, tblMap)
 	return tbls, nil
 }
 
@@ -355,6 +357,50 @@ func (c *Client) distributeReferencedKeys(schema string, tblMap map[string]*Tabl
 		tbl, ok := tblMap[fk.ColumnReferences()[0].To().TableName()]
 		if ok {
 			tbl.AddReferencedKey(fk)
+		}
+	}
+	return nil
+}
+
+func (c *Client) setConstraints(tbl *Table) error {
+	rows, err := c.db.Query(c.provider.ConstraintsSQL(), tbl.Schema(), tbl.Name())
+	if err != nil {
+		return err
+	}
+	for _, cn := range c.readConstraints(rows) {
+		tbl.AddConstraint(cn)
+	}
+	return nil
+}
+
+func (c *Client) readConstraints(rows *sql.Rows) []*Constraint {
+	cons := make([]*Constraint, 0, 10)
+	for rows.Next() {
+		var (
+			schema  sql.NullString
+			tblName sql.NullString
+			name    sql.NullString
+			kind    sql.NullString
+			content sql.NullString
+		)
+		rows.Scan(&schema, &tblName, &name, &kind, &content)
+		if len(cons) == 0 || cons[len(cons)-1].Name() != name.String {
+			con := NewConstraint(schema.String, tblName.String, name.String, kind.String, content.String)
+			cons = append(cons, &con)
+		}
+	}
+	return cons
+}
+
+func (c *Client) distributeConstraints(schema string, tblMap map[string]*Table) error {
+	rows, err := c.db.Query(c.provider.AllConstraintsSQL(), schema)
+	if err != nil {
+		return err
+	}
+	for _, con := range c.readConstraints(rows) {
+		tbl, ok := tblMap[con.TableName()]
+		if ok {
+			tbl.AddConstraint(con)
 		}
 	}
 	return nil

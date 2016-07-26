@@ -62,6 +62,7 @@ func NewTable(schema string, tableName string, comment string) Table {
 		indices:     make([]*Index, 0, 5),
 		foreignKeys: make([]*ForeignKey, 0, 5),
 		refKeys:     make([]*ForeignKey, 0, 5),
+		constraints: make([]*Constraint, 0, 5),
 	}
 }
 

@@ -118,7 +118,7 @@ type Provider interface {
 	//     2. foreign key name
 	//     3. column position (to)
 	AllReferencedKeysSQL() string
-	// ForeignKeysSQL should return SQL for loading referenced foreign keys in a table.
+	// ReferencedKeys should return SQL for loading referenced foreign keys in a table.
 	// Parameters:
 	//     1. schema
 	//     2. table name
@@ -128,6 +128,29 @@ type Provider interface {
 	//     1. foreign key name
 	//     2. column position (to)
 	ReferencedKeysSQL() string
-	AllConstrantsSQL() string
-	ConstrantsSQL() string
+	// AllConstraintsSQL should return SQL for loading all constraints.
+	// Parameters:
+	//     1. schema
+	// Return columns:
+	//     1. schema
+	//     2. table name
+	//     3. constraint name
+	//     4. kind (eg. "CHECK", "UNIQUE")
+	//     5. content
+	// Order:
+	//     1. table name
+	//     2. kind
+	//     3. constraint name
+	AllConstraintsSQL() string
+	// ConstraintsSQL should return SQL for loading constraints in a table.
+	// Parameters:
+	//     1. schema
+	//     2. table name
+	// Return columns:
+	//     same as AllConstraintsSQL
+	// Order:
+	//     1. table name
+	//     2. kind
+	//     3. constraint name
+	ConstraintsSQL() string
 }

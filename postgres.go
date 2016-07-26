@@ -403,7 +403,7 @@ WHERE fns.nspname = $1
 ORDER BY fcls.relname, fcns.conname, fcns.pos`
 }
 
-func (p postgres) ConstrantsSQL() string {
+func (p postgres) ConstraintsSQL() string {
 	return `
 SELECT ns.nspname AS schema
      , cls.relname AS table_name
@@ -439,9 +439,9 @@ JOIN pg_catalog.pg_namespace ns
 ON ns.oid = cls.relnamespace
 JOIN pg_catalog.pg_attribute att
 ON att.attrelid = cls.oid
-AND att.attnum = cns.colnums[pos]
+AND att.attnum = cns.colnums[cns.pos]
 JOIN pg_catalog.pg_operator op
-ON op.oid = cns.opids[pos]
+ON op.oid = cns.opids[cns.pos]
 WHERE ns.nspname = $1
 AND   cls.relname = $2
 GROUP BY 1, 2, 3
@@ -472,7 +472,7 @@ GROUP BY 1, 2, 3
 ORDER BY table_name, constraint_kind, constraint_name`
 }
 
-func (p postgres) AllConstrantsSQL() string {
+func (p postgres) AllConstraintsSQL() string {
 	return `
 SELECT ns.nspname AS schema
      , cls.relname AS table_name
@@ -509,7 +509,7 @@ JOIN pg_catalog.pg_attribute att
 ON att.attrelid = cls.oid
 AND att.attnum = cns.colnums[cns.pos]
 JOIN pg_catalog.pg_operator op
-ON op.oid = cns.opids[pos]
+ON op.oid = cns.opids[cns.pos]
 WHERE ns.nspname = $1
 GROUP BY 1, 2, 3
 UNION

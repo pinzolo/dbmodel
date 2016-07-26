@@ -463,6 +463,43 @@ func TestPostgresTableReferencedKeysColumnReferences(t *testing.T) {
 	}
 }
 
+func TestPostgresTableConstraitsCount(t *testing.T) {
+	tbl := loadPostgresTable("human_resources", "employee")
+	if len(tbl.Constraints()) != 6 {
+		t.Errorf("Constraint count is invalid. expected: %v, actual: %v", 5, len(tbl.Constraints()))
+	}
+}
+
+func TestPostgresTableConstraitsOrder(t *testing.T) {
+	tbl := loadPostgresTable("production", "document")
+	if actual, expected := tbl.Constraints()[0].Name(), "ck_document_status"; actual != expected {
+		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Constraints()[1].Name(), "document_rowguid_key"; actual != expected {
+		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableConstraintKind(t *testing.T) {
+	tbl := loadPostgresTable("production", "document")
+	if actual, expected := tbl.Constraints()[0].Kind(), "CHECK"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Constraints()[1].Kind(), "UNIQUE"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresTableConstraintContent(t *testing.T) {
+	tbl := loadPostgresTable("production", "document")
+	if actual, expected := tbl.Constraints()[0].Content(), "((status >= 1) AND (status <= 3))"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Constraints()[1].Content(), "rowguid"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
 func TestPostgresAllTableCount(t *testing.T) {
 	tbls := loadPostgresAllTables("sales")
 	if actual, expected := len(tbls), 19; actual != expected {
@@ -784,6 +821,43 @@ func TestPostgresAllTablesReferencedKeysColumnReferences(t *testing.T) {
 	}
 	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
 		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresAllTablesConstraitsCount(t *testing.T) {
+	tbl := loadPostgresTableByAllTables("human_resources", "employee")
+	if len(tbl.Constraints()) != 6 {
+		t.Errorf("Constraint count is invalid. expected: %v, actual: %v", 5, len(tbl.Constraints()))
+	}
+}
+
+func TestPostgresAllTablesConstraitsOrder(t *testing.T) {
+	tbl := loadPostgresTableByAllTables("production", "document")
+	if actual, expected := tbl.Constraints()[0].Name(), "ck_document_status"; actual != expected {
+		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Constraints()[1].Name(), "document_rowguid_key"; actual != expected {
+		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresAllTablesConstraintKind(t *testing.T) {
+	tbl := loadPostgresTableByAllTables("production", "document")
+	if actual, expected := tbl.Constraints()[0].Kind(), "CHECK"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Constraints()[1].Kind(), "UNIQUE"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestPostgresAllTablesConstraintContent(t *testing.T) {
+	tbl := loadPostgresTableByAllTables("production", "document")
+	if actual, expected := tbl.Constraints()[0].Content(), "((status >= 1) AND (status <= 3))"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	}
+	if actual, expected := tbl.Constraints()[1].Content(), "rowguid"; actual != expected {
+		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
 	}
 }
 
