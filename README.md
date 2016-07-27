@@ -3,17 +3,28 @@
 [![Build Status](https://travis-ci.org/pinzolo/dbmodel.png)](http://travis-ci.org/pinzolo/dbmodel)
 [![Coverage Status](https://coveralls.io/repos/github/pinzolo/dbmodel/badge.svg?branch=master)](https://coveralls.io/github/pinzolo/dbmodel?branch=master)
 
-
 ## Description
 
+dbmodel is simple database modeling.  
+dbmodel does not import database driver in production code. You must import database driver in your code.
+
+## Databases
+
+* PostgreSQL: higher 8.3
+* MySQL: not supported yet
+* Oracle: not supported yet
+* SQL Server: not supported yet
+
 ## Usage
+
+Install and use in your code.
 
 ## Install
 
 To install, use `go get`:
 
 ```bash
-$ go get -d github.com/pinzolo/dbmodel
+$ go get github.com/pinzolo/dbmodel
 ```
 
 ## Contribution
