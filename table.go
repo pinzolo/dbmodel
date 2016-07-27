@@ -121,7 +121,7 @@ func (t *Table) FindIndex(name string) (*Index, bool) {
 	return nil, false
 }
 
-// FindForeignKey returns index that has same name as argument.
+// FindForeignKey returns foreign key that has same name as argument.
 // If foreign key that has same name does not exist, return false as second value.
 func (t *Table) FindForeignKey(name string) (*ForeignKey, bool) {
 	for _, fk := range t.ForeignKeys() {
@@ -132,12 +132,23 @@ func (t *Table) FindForeignKey(name string) (*ForeignKey, bool) {
 	return nil, false
 }
 
-// FindReferencedKey returns index that has same name as argument.
+// FindReferencedKey returns referenced key that has same name as argument.
 // If referenced key that has same name does not exist, return false as second value.
 func (t *Table) FindReferencedKey(name string) (*ForeignKey, bool) {
 	for _, rk := range t.ReferencedKeys() {
 		if rk.Name() == name {
 			return rk, true
+		}
+	}
+	return nil, false
+}
+
+// FindConstraint returns constraint that has same name as argument.
+// If constraint that has same name does not exist, return false as second value.
+func (t *Table) FindConstraint(name string) (*Constraint, bool) {
+	for _, con := range t.Constraints() {
+		if con.Name() == name {
+			return con, true
 		}
 	}
 	return nil, false
