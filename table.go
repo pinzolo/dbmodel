@@ -142,15 +142,3 @@ func (t *Table) FindReferencedKey(name string) (*ForeignKey, bool) {
 	}
 	return nil, false
 }
-
-func (t *Table) lastIndex() *Index {
-	return t.indices[len(t.indices)-1]
-}
-
-func (t *Table) lastForeignKey() *ForeignKey {
-	return t.foreignKeys[len(t.foreignKeys)-1]
-}
-
-func (t *Table) lastRefKey() *ForeignKey {
-	return t.refKeys[len(t.refKeys)-1]
-}
