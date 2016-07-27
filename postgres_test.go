@@ -160,7 +160,7 @@ func TestPostgresTableValid(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	tbl, err := c.Table("production", "location")
+	tbl, err := c.Table("production", "location", RequireNone)
 	if err != nil {
 		t.Error("Client should not raise error when valid schema and table name given.")
 	}
@@ -174,7 +174,7 @@ func TestPostgresTableNotFound(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	_, err := c.Table("production", "xxxxx")
+	_, err := c.Table("production", "xxxxx", RequireNone)
 	if err == nil {
 		t.Error("Client should raise error when given table name not exist")
 	}
@@ -188,7 +188,7 @@ func TestPostgresTableWithoutSchema(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	_, err := c.Table("", "location")
+	_, err := c.Table("", "location", RequireNone)
 	if err == nil {
 		t.Errorf("Client should raise error when empty schema given.")
 	}
@@ -874,7 +874,7 @@ func loadPostgresTable(schema string, name string) *Table {
 	defer c.Disconnect()
 	c.Connect()
 
-	t, err := c.Table(schema, name)
+	t, err := c.Table(schema, name, RequireAll)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -886,7 +886,7 @@ func loadPostgresAllTables(schema string) []*Table {
 	defer c.Disconnect()
 	c.Connect()
 
-	tbls, err := c.AllTables(schema)
+	tbls, err := c.AllTables(schema, RequireAll)
 	if err != nil {
 		log.Fatal(err)
 	}
