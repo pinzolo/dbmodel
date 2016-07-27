@@ -1,6 +1,8 @@
 # dbmodel
 
 [![Build Status](https://travis-ci.org/pinzolo/dbmodel.png)](http://travis-ci.org/pinzolo/dbmodel)
+[![Coverage Status](https://coveralls.io/repos/github/pinzolo/dbmodel/badge.svg?branch=master)](https://coveralls.io/github/pinzolo/dbmodel?branch=master)
+
 
 ## Description
 
