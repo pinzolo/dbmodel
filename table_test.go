@@ -106,22 +106,6 @@ func TestAddReferencedKeyToTable(t *testing.T) {
 	}
 }
 
-func TestFindColumn(t *testing.T) {
-	tbl := newUserTable()
-	col := Column{name: "id"}
-	tbl.AddColumn(&col)
-	col = Column{name: "name"}
-	tbl.AddColumn(&col)
-	fc, ok := tbl.FindColumn("name")
-	if !ok || fc.Name() != "name" {
-		t.Error("FindColumn should return name column")
-	}
-	fc, ok = tbl.FindColumn("login")
-	if ok {
-		t.Error("FindColumn should raise error when given not having column name.")
-	}
-}
-
 func TestAddConstraintToTable(t *testing.T) {
 	tbl := newUserTable()
 	col := Column{name: "age"}
@@ -139,6 +123,99 @@ func TestAddConstraintToTable(t *testing.T) {
 	}
 	if tbl.Constraints()[0].TableName() != tbl.Name() {
 		t.Errorf("Constraint's table name should be set by table's name.")
+	}
+}
+
+func TestFindColumn(t *testing.T) {
+	tbl := newUserTable()
+	col := Column{name: "id"}
+	tbl.AddColumn(&col)
+	col = Column{name: "name"}
+	tbl.AddColumn(&col)
+	fcol, ok := tbl.FindColumn("name")
+	if !ok || fcol.Name() != "name" {
+		t.Error("FindColumn should return name column.")
+	}
+	fcol, ok = tbl.FindColumn("login")
+	if ok {
+		t.Error("FindColumn should return false as second value when given not having column name.")
+	}
+}
+
+func TestFindIndex(t *testing.T) {
+	tbl := newUserTable()
+	col := Column{name: "id"}
+	tbl.AddColumn(&col)
+	idx := NewIndex("", "", "users_pk", true)
+	idx.AddColumn(&col)
+	tbl.AddIndex(&idx)
+	fidx, ok := tbl.FindIndex("users_pk")
+	if !ok || fidx.Name() != "users_pk" {
+		t.Error("FindIndex should return users_pk index.")
+	}
+	fidx, ok = tbl.FindIndex("users_idx")
+	if ok {
+		t.Error("FindIndex should return false as second value when given not having index name.")
+	}
+}
+
+func TestFindForeignKey(t *testing.T) {
+	usr := newUserTable()
+	usr.AddColumn(&Column{name: "id"})
+	pst := newPostTable()
+	pst.AddColumn(&Column{name: "id"})
+	pst.AddColumn(&Column{name: "user_id"})
+	fk := NewForeignKey("foo", "posts", "posts_user_id")
+	colUserID, _ := pst.FindColumn("user_id")
+	colID, _ := usr.FindColumn("id")
+	cr := NewColumnReference(colUserID, colID)
+	fk.AddColumnReference(&cr)
+	pst.AddForeignKey(&fk)
+	ffk, ok := pst.FindForeignKey("posts_user_id")
+	if !ok || ffk.Name() != "posts_user_id" {
+		t.Error("FindForeignKey should return posts_user_id foreign key.")
+	}
+	ffk, ok = pst.FindForeignKey("posts_foo")
+	if ok {
+		t.Error("FindForeignKey should return false as second value when given not having foreign key name.")
+	}
+}
+
+func TestFindReferencedKey(t *testing.T) {
+	usr := newUserTable()
+	usr.AddColumn(&Column{name: "id"})
+	pst := newPostTable()
+	pst.AddColumn(&Column{name: "id"})
+	pst.AddColumn(&Column{name: "user_id"})
+	fk := NewForeignKey("foo", "posts", "posts_user_id")
+	colUserID, _ := pst.FindColumn("user_id")
+	colID, _ := usr.FindColumn("id")
+	cr := NewColumnReference(colUserID, colID)
+	fk.AddColumnReference(&cr)
+	usr.AddReferencedKey(&fk)
+	frk, ok := usr.FindReferencedKey("posts_user_id")
+	if !ok || frk.Name() != "posts_user_id" {
+		t.Error("FindReferencedKey should return posts_user_id referenced key.")
+	}
+	frk, ok = usr.FindReferencedKey("posts_foo")
+	if ok {
+		t.Error("FindReferencedKey should return false as second value when given not having referenced key name.")
+	}
+}
+
+func TestFindConstraint(t *testing.T) {
+	tbl := newUserTable()
+	col := Column{name: "age"}
+	tbl.AddColumn(&col)
+	con := NewConstraint("", "", "users_age_check", "CHECK", "(age >= 0)")
+	tbl.AddConstraint(&con)
+	fcon, ok := tbl.FindConstraint("users_age_check")
+	if !ok || fcon.Name() != "users_age_check" {
+		t.Error("FindConstraint should return users_age_check constraint.")
+	}
+	fcon, ok = tbl.FindConstraint("users_login_uniq")
+	if ok {
+		t.Error("FindConstraint should return false as second value when given not having constraint name.")
 	}
 }
 
