@@ -104,7 +104,7 @@ func (c *Client) TableNames(schema string, name string) ([]*Table, error) {
 // Table returns table meta data.
 // If schema is empty, raise ErrSchemaEmpty.
 // If name is empaty, raise ErrTableNameEmpty.
-func (c *Client) Table(schema string, name string) (*Table, error) {
+func (c *Client) Table(schema string, name string, opt Option) (*Table, error) {
 	if err := c.preCheck(schema); err != nil {
 		return nil, err
 	}
@@ -123,16 +123,24 @@ func (c *Client) Table(schema string, name string) (*Table, error) {
 		return nil, fmt.Errorf("Table '%v' is not found.", name)
 	}
 	tbl := tbls[0]
-	c.setIndices(tbl)
-	c.setForeignKyes(tbl)
-	c.setReferencedKyes(tbl)
-	c.setConstraints(tbl)
+	if opt.Indices {
+		c.setIndices(tbl)
+	}
+	if opt.ForeignKeys {
+		c.setForeignKyes(tbl)
+	}
+	if opt.ReferencedKeys {
+		c.setReferencedKyes(tbl)
+	}
+	if opt.Constraints {
+		c.setConstraints(tbl)
+	}
 	return tbl, nil
 }
 
 // AllTables returns table meta data list that are contained in given schema.
 // If schema is empty, raise ErrSchemaEmpty.
-func (c *Client) AllTables(schema string) ([]*Table, error) {
+func (c *Client) AllTables(schema string, opt Option) ([]*Table, error) {
 	if err := c.preCheck(schema); err != nil {
 		return nil, err
 	}
@@ -148,10 +156,18 @@ func (c *Client) AllTables(schema string) ([]*Table, error) {
 	for _, tbl := range tbls {
 		tblMap[tbl.Name()] = tbl
 	}
-	c.distributeIndices(schema, tblMap)
-	c.distributeForeignKeys(schema, tblMap)
-	c.distributeReferencedKeys(schema, tblMap)
-	c.distributeConstraints(schema, tblMap)
+	if opt.Indices {
+		c.distributeIndices(schema, tblMap)
+	}
+	if opt.ForeignKeys {
+		c.distributeForeignKeys(schema, tblMap)
+	}
+	if opt.ReferencedKeys {
+		c.distributeReferencedKeys(schema, tblMap)
+	}
+	if opt.Constraints {
+		c.distributeConstraints(schema, tblMap)
+	}
 	return tbls, nil
 }
 
