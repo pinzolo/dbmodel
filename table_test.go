@@ -13,10 +13,10 @@ func TestAddColumnToTable(t *testing.T) {
 	col := Column{name: "name"}
 	tbl.AddColumn(&col)
 	if len(tbl.Columns()) != 1 {
-		t.Errorf("If table has a column, Columns() should be 1 length. (%+v)", tbl)
+		t.Errorf("If table has a column, Columns() should be 1 length. (%#v)", tbl)
 	}
 	if tbl.Columns()[0].Name() != "name" {
-		t.Errorf("Invalid column added. (%+v)", tbl.Columns())
+		t.Errorf("Invalid column added. (%#v)", tbl.Columns())
 	}
 	if tbl.Columns()[0].Schema() != tbl.Schema() {
 		t.Errorf("Column's schema should be set by table's schema.")
@@ -29,7 +29,7 @@ func TestAddColumnToTable(t *testing.T) {
 		tbl.AddColumn(&c)
 	}
 	if len(tbl.Columns()) != 11 {
-		t.Errorf("If table has some columns, Columns() should be valid length. (%+v)", tbl)
+		t.Errorf("If table has some columns, Columns() should be valid length. (%#v)", tbl)
 	}
 }
 
@@ -44,7 +44,7 @@ func TestAddIndexToTable(t *testing.T) {
 	}
 	tbl.AddIndex(&idx)
 	if len(tbl.Indices()) != 1 {
-		t.Errorf("If table has a index, Indices() should be 1 length. (%+v)", tbl)
+		t.Errorf("If table has a index, Indices() should be 1 length. (%#v)", tbl)
 	}
 	if tbl.Indices()[0].Schema() != tbl.Schema() {
 		t.Errorf("Index's schema should be set by table's schema.")
@@ -70,7 +70,7 @@ func TestAddForeignKeyToTable(t *testing.T) {
 	fk.AddColumnReference(&cr)
 	pst.AddForeignKey(&fk)
 	if len(pst.ForeignKeys()) != 1 {
-		t.Errorf("If table has a foreign key, ForeignKeys() should be 1 length. (%+v)", pst.ForeignKeys())
+		t.Errorf("If table has a foreign key, ForeignKeys() should be 1 length. (%#v)", pst.ForeignKeys())
 	}
 	if pst.ForeignKeys()[0].Schema() != pst.Schema() {
 		t.Error("Foreign key's schema should be set by table's schema.")
@@ -99,7 +99,7 @@ func TestAddReferencedKeyToTable(t *testing.T) {
 	fk.AddColumnReference(&cr)
 	usr.AddReferencedKey(&fk)
 	if len(usr.ReferencedKeys()) != 1 {
-		t.Errorf("If table has a referenced key, ReferencedKeys() should be 1 length. (%+v)", usr.ReferencedKeys())
+		t.Errorf("If table has a referenced key, ReferencedKeys() should be 1 length. (%#v)", usr.ReferencedKeys())
 	}
 	if usr.ReferencedKeys()[0].Name() != "posts_user_id" {
 		t.Error("Invalid referenced key is added.")
@@ -116,7 +116,7 @@ func TestAddConstraintToTable(t *testing.T) {
 	con := NewConstraint("", "", "users_age_check", "CHECK", "(age >= 0)")
 	tbl.AddConstraint(&con)
 	if len(tbl.Constraints()) != 1 {
-		t.Errorf("If table has a constraint, Constraints() should be 1 length. (%+v)", tbl.Constraints())
+		t.Errorf("If table has a constraint, Constraints() should be 1 length. (%#v)", tbl.Constraints())
 	}
 	if tbl.Constraints()[0].Schema() != tbl.Schema() {
 		t.Errorf("Constraint's schema should be set by table's schema.")

@@ -29,16 +29,16 @@ func TestAddColumnToIndex(t *testing.T) {
 	col := Column{name: "name"}
 	idx.AddColumn(&col)
 	if len(idx.Columns()) != 1 {
-		t.Errorf("If table has a column, Columns() should be 1 length. (%+v)", idx)
+		t.Errorf("If table has a column, Columns() should be 1 length. (%#v)", idx)
 	}
 	if idx.Columns()[0].Name() != "name" {
-		t.Errorf("Invalid column added. (%+v)", idx.Columns())
+		t.Errorf("Invalid column added. (%#v)", idx.Columns())
 	}
 	for i := 0; i < 10; i++ {
 		c := Column{name: "name" + strconv.Itoa(i)}
 		idx.AddColumn(&c)
 	}
 	if len(idx.Columns()) != 11 {
-		t.Errorf("If table has some columns, Columns() should be valid length. (%+v)", idx)
+		t.Errorf("If table has some columns, Columns() should be valid length. (%#v)", idx)
 	}
 }

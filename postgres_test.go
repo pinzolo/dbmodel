@@ -69,7 +69,7 @@ func TestPostgresAllTableNames(t *testing.T) {
 		t.Errorf("AllTableNames returns invalid table name. expected 'credit_card', but actual '%v'", ts[1].Name())
 	}
 	if ts[1].Comment() != "Customer credit card information." {
-		t.Errorf("AllTableNames should pick up table comment. %+v", ts[1])
+		t.Errorf("AllTableNames should pick up table comment. %#v", ts[1])
 	}
 }
 
