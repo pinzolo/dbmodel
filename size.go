@@ -14,7 +14,7 @@ type Size struct {
 	valid     bool
 }
 
-// Length returns length.(used when data type is charactor)
+// Length returns length.(used when data type is character)
 func (s Size) Length() sql.NullInt64 {
 	return s.length
 }
