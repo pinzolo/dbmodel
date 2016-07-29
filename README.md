@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/pinzolo/dbmodel.png)](http://travis-ci.org/pinzolo/dbmodel)
 [![Coverage Status](https://coveralls.io/repos/github/pinzolo/dbmodel/badge.svg?branch=master)](https://coveralls.io/github/pinzolo/dbmodel?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pinzolo/dbmodel)](https://goreportcard.com/report/github.com/pinzolo/dbmodel)
 [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/pinzolo/dbmodel)
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/pinzolo/dbmodel/master/LICENSE)
 
