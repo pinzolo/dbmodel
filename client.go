@@ -124,16 +124,32 @@ func (c *Client) Table(schema string, name string, opt Option) (*Table, error) {
 	}
 	tbl := tbls[0]
 	if opt.Indices {
-		c.setIndices(tbl)
+		idxs, err := c.loadIndices(tbl.Schema(), tbl.Name())
+		if err != nil {
+			return nil, err
+		}
+		tbl.indices = idxs
 	}
 	if opt.ForeignKeys {
-		c.setForeignKyes(tbl)
+		fks, err := c.loadForeignKeys(tbl.Schema(), tbl.Name())
+		if err != nil {
+			return nil, err
+		}
+		tbl.foreignKeys = fks
 	}
 	if opt.ReferencedKeys {
-		c.setReferencedKyes(tbl)
+		rks, err := c.loadReferencedKeys(tbl.Schema(), tbl.Name())
+		if err != nil {
+			return nil, err
+		}
+		tbl.refKeys = rks
 	}
 	if opt.Constraints {
-		c.setConstraints(tbl)
+		cnss, err := c.loadConstraints(tbl.Schema(), tbl.Name())
+		if err != nil {
+			return nil, err
+		}
+		tbl.constraints = cnss
 	}
 	return tbl, nil
 }
@@ -157,16 +173,52 @@ func (c *Client) AllTables(schema string, opt Option) ([]*Table, error) {
 		tblMap[tbl.Name()] = tbl
 	}
 	if opt.Indices {
-		c.distributeIndices(schema, tblMap)
+		idxMap, err := c.loadIndicesMap(schema)
+		if err != nil {
+			return nil, err
+		}
+		for tblName, idxs := range idxMap {
+			tbl, ok := tblMap[tblName]
+			if ok {
+				tbl.indices = idxs
+			}
+		}
 	}
 	if opt.ForeignKeys {
-		c.distributeForeignKeys(schema, tblMap)
+		fkMap, err := c.loadForeignKeysMap(schema)
+		if err != nil {
+			return nil, err
+		}
+		for tblName, fks := range fkMap {
+			tbl, ok := tblMap[tblName]
+			if ok {
+				tbl.foreignKeys = fks
+			}
+		}
 	}
 	if opt.ReferencedKeys {
-		c.distributeReferencedKeys(schema, tblMap)
+		rkMap, err := c.loadReferencedKeysMap(schema)
+		if err != nil {
+			return nil, err
+		}
+		for tblName, rks := range rkMap {
+			tbl, ok := tblMap[tblName]
+			if ok {
+				tbl.refKeys = rks
+			}
+		}
 	}
 	if opt.Constraints {
-		c.distributeConstraints(schema, tblMap)
+		cnsMap, err := c.loadConstraintsMap(schema)
+		if err != nil {
+			return nil, err
+		}
+		for tblName, cnss := range cnsMap {
+			tbl, ok := tblMap[tblName]
+			if ok {
+				tbl.constraints = cnss
+			}
+		}
 	}
 	return tbls, nil
 }
@@ -245,29 +297,31 @@ func (c *Client) readTables(rows *sql.Rows) []*Table {
 	return tbls
 }
 
-func (c *Client) setIndices(tbl *Table) error {
-	rows, err := c.db.Query(c.provider.IndicesSQL(), tbl.Schema(), tbl.Name())
+func (c *Client) loadIndices(schema string, tblName string) ([]*Index, error) {
+	rows, err := c.db.Query(c.provider.IndicesSQL(), schema, tblName)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, idx := range c.readIndices(rows) {
-		tbl.AddIndex(idx)
-	}
-	return nil
+
+	return c.readIndices(rows), nil
 }
 
-func (c *Client) distributeIndices(schema string, tblMap map[string]*Table) error {
+func (c *Client) loadIndicesMap(schema string) (map[string][]*Index, error) {
 	rows, err := c.db.Query(c.provider.AllIndicesSQL(), schema)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	idxMap := make(map[string][]*Index)
 	for _, idx := range c.readIndices(rows) {
-		tbl, ok := tblMap[idx.TableName()]
+		idxs, ok := idxMap[idx.TableName()]
 		if ok {
-			tbl.AddIndex(idx)
+			idxMap[idx.TableName()] = append(idxs, idx)
+		} else {
+			idxMap[idx.TableName()] = []*Index{idx}
 		}
 	}
-	return nil
+	return idxMap, nil
 }
 
 func (c *Client) readIndices(rows *sql.Rows) []*Index {
@@ -295,29 +349,77 @@ func (c *Client) readIndices(rows *sql.Rows) []*Index {
 	return idxs
 }
 
-func (c *Client) setForeignKyes(tbl *Table) error {
-	rows, err := c.db.Query(c.provider.ForeignKeysSQL(), tbl.Schema(), tbl.Name())
+func (c *Client) loadConstraints(schema string, tblName string) ([]*Constraint, error) {
+	rows, err := c.db.Query(c.provider.ConstraintsSQL(), schema, tblName)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, fk := range c.readForeignKeys(rows) {
-		tbl.AddForeignKey(fk)
-	}
-	return nil
+
+	return c.readConstraints(rows), nil
 }
 
-func (c *Client) distributeForeignKeys(schema string, tblMap map[string]*Table) error {
-	rows, err := c.db.Query(c.provider.AllForeignKeysSQL(), schema)
+func (c *Client) loadConstraintsMap(schema string) (map[string][]*Constraint, error) {
+	rows, err := c.db.Query(c.provider.AllConstraintsSQL(), schema)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, fk := range c.readForeignKeys(rows) {
-		tbl, ok := tblMap[fk.TableName()]
+
+	cnsMap := make(map[string][]*Constraint)
+	for _, cns := range c.readConstraints(rows) {
+		fks, ok := cnsMap[cns.TableName()]
 		if ok {
-			tbl.AddForeignKey(fk)
+			cnsMap[cns.TableName()] = append(fks, cns)
+		} else {
+			cnsMap[cns.TableName()] = []*Constraint{cns}
 		}
 	}
-	return nil
+	return cnsMap, nil
+}
+
+func (c *Client) readConstraints(rows *sql.Rows) []*Constraint {
+	cons := make([]*Constraint, 0, 10)
+	for rows.Next() {
+		var (
+			schema  sql.NullString
+			tblName sql.NullString
+			name    sql.NullString
+			kind    sql.NullString
+			content sql.NullString
+		)
+		rows.Scan(&schema, &tblName, &name, &kind, &content)
+		if len(cons) == 0 || cons[len(cons)-1].Name() != name.String {
+			con := NewConstraint(schema.String, tblName.String, name.String, kind.String, content.String)
+			cons = append(cons, &con)
+		}
+	}
+	return cons
+}
+
+func (c *Client) loadForeignKeys(schema string, tblName string) ([]*ForeignKey, error) {
+	rows, err := c.db.Query(c.provider.ForeignKeysSQL(), schema, tblName)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.readForeignKeys(rows), nil
+}
+
+func (c *Client) loadForeignKeysMap(schema string) (map[string][]*ForeignKey, error) {
+	rows, err := c.db.Query(c.provider.AllForeignKeysSQL(), schema)
+	if err != nil {
+		return nil, err
+	}
+
+	fkMap := make(map[string][]*ForeignKey)
+	for _, fk := range c.readForeignKeys(rows) {
+		fks, ok := fkMap[fk.TableName()]
+		if ok {
+			fkMap[fk.TableName()] = append(fks, fk)
+		} else {
+			fkMap[fk.TableName()] = []*ForeignKey{fk}
+		}
+	}
+	return fkMap, nil
 }
 
 func (c *Client) readForeignKeys(rows *sql.Rows) []*ForeignKey {
@@ -353,71 +455,30 @@ func (c *Client) readForeignKeys(rows *sql.Rows) []*ForeignKey {
 	return fks
 }
 
-func (c *Client) setReferencedKyes(tbl *Table) error {
-	rows, err := c.db.Query(c.provider.ReferencedKeysSQL(), tbl.Schema(), tbl.Name())
+func (c *Client) loadReferencedKeys(schema string, tblName string) ([]*ForeignKey, error) {
+	rows, err := c.db.Query(c.provider.ReferencedKeysSQL(), schema, tblName)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, fk := range c.readForeignKeys(rows) {
-		tbl.AddReferencedKey(fk)
-	}
-	return nil
+
+	return c.readForeignKeys(rows), nil
 }
 
-func (c *Client) distributeReferencedKeys(schema string, tblMap map[string]*Table) error {
+func (c *Client) loadReferencedKeysMap(schema string) (map[string][]*ForeignKey, error) {
 	rows, err := c.db.Query(c.provider.AllReferencedKeysSQL(), schema)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, fk := range c.readForeignKeys(rows) {
-		tbl, ok := tblMap[fk.ColumnReferences()[0].To().TableName()]
+
+	rkMap := make(map[string][]*ForeignKey)
+	for _, rk := range c.readForeignKeys(rows) {
+		tblName := rk.ColumnReferences()[0].To().TableName()
+		rks, ok := rkMap[tblName]
 		if ok {
-			tbl.AddReferencedKey(fk)
+			rkMap[tblName] = append(rks, rk)
+		} else {
+			rkMap[tblName] = []*ForeignKey{rk}
 		}
 	}
-	return nil
-}
-
-func (c *Client) setConstraints(tbl *Table) error {
-	rows, err := c.db.Query(c.provider.ConstraintsSQL(), tbl.Schema(), tbl.Name())
-	if err != nil {
-		return err
-	}
-	for _, cn := range c.readConstraints(rows) {
-		tbl.AddConstraint(cn)
-	}
-	return nil
-}
-
-func (c *Client) readConstraints(rows *sql.Rows) []*Constraint {
-	cons := make([]*Constraint, 0, 10)
-	for rows.Next() {
-		var (
-			schema  sql.NullString
-			tblName sql.NullString
-			name    sql.NullString
-			kind    sql.NullString
-			content sql.NullString
-		)
-		rows.Scan(&schema, &tblName, &name, &kind, &content)
-		if len(cons) == 0 || cons[len(cons)-1].Name() != name.String {
-			con := NewConstraint(schema.String, tblName.String, name.String, kind.String, content.String)
-			cons = append(cons, &con)
-		}
-	}
-	return cons
-}
-
-func (c *Client) distributeConstraints(schema string, tblMap map[string]*Table) error {
-	rows, err := c.db.Query(c.provider.AllConstraintsSQL(), schema)
-	if err != nil {
-		return err
-	}
-	for _, con := range c.readConstraints(rows) {
-		tbl, ok := tblMap[con.TableName()]
-		if ok {
-			tbl.AddConstraint(con)
-		}
-	}
-	return nil
+	return rkMap, nil
 }
