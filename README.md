@@ -13,7 +13,7 @@ dbmodel does not import database driver in production code. You must import data
 
 ## Databases
 
-* PostgreSQL: higher 8.3
+* PostgreSQL: higher 8.4
 * MySQL: not supported yet
 * Oracle: not supported yet
 * SQL Server: not supported yet

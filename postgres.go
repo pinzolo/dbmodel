@@ -408,7 +408,7 @@ ORDER BY fcls.relname, fcns.conname, fcns.pos`
 }
 
 func (p postgres) ConstraintsSQL() string {
-	return `
+	sql := `
 SELECT ns.nspname AS schema
      , cls.relname AS table_name
      , cns.conname AS constraint_name
@@ -422,6 +422,35 @@ ON ns.oid = cls.relnamespace
 WHERE cns.contype = 'c'
 AND   ns.nspname = $1
 AND   cls.relname = $2
+UNION
+SELECT ns.nspname AS schema
+     , cls.relname AS table_name
+     , cns.conname AS constraint_name
+     , 'UNIQUE' AS constraint_kind
+     , array_to_string(array_agg(att.attname), ', ') AS constraint_content
+FROM (
+    SELECT conrelid
+         , conname
+         , conkey AS colnums
+         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
+    FROM pg_catalog.pg_constraint
+    WHERE contype = 'u'
+) cns
+JOIN pg_catalog.pg_class cls
+ON cls.oid = cns.conrelid
+JOIN pg_catalog.pg_namespace ns
+ON ns.oid = cls.relnamespace
+JOIN pg_catalog.pg_attribute att
+ON att.attrelid = cls.oid
+AND att.attnum = cns.colnums[cns.pos]
+WHERE ns.nspname = $1
+AND   cls.relname = $2
+GROUP BY 1, 2, 3`
+	if p.ds.Version != "" {
+		v1, err1 := version.NewVersion("9.0")
+		v2, err2 := version.NewVersion(p.ds.Version)
+		if err1 == nil && err2 == nil && v2.Compare(v1) >= 0 {
+			sql += `
 UNION
 SELECT ns.nspname AS schema
      , cls.relname AS table_name
@@ -448,31 +477,10 @@ JOIN pg_catalog.pg_operator op
 ON op.oid = cns.opids[cns.pos]
 WHERE ns.nspname = $1
 AND   cls.relname = $2
-GROUP BY 1, 2, 3
-UNION
-SELECT ns.nspname AS schema
-     , cls.relname AS table_name
-     , cns.conname AS constraint_name
-     , 'UNIQUE' AS constraint_kind
-     , array_to_string(array_agg(att.attname), ', ') AS constraint_content
-FROM (
-    SELECT conrelid
-         , conname
-         , conkey AS colnums
-         , generate_series(1, length(array_to_string(conkey, ' ')) - length(array_to_string(conkey, '')) + 1) AS pos
-    FROM pg_catalog.pg_constraint
-    WHERE contype = 'u'
-) cns
-JOIN pg_catalog.pg_class cls
-ON cls.oid = cns.conrelid
-JOIN pg_catalog.pg_namespace ns
-ON ns.oid = cls.relnamespace
-JOIN pg_catalog.pg_attribute att
-ON att.attrelid = cls.oid
-AND att.attnum = cns.colnums[cns.pos]
-WHERE ns.nspname = $1
-AND   cls.relname = $2
-GROUP BY 1, 2, 3
+GROUP BY 1, 2, 3`
+		}
+	}
+	return sql + `
 ORDER BY table_name, constraint_kind, constraint_name`
 }
 
@@ -516,7 +524,7 @@ GROUP BY 1, 2, 3`
 	if p.ds.Version != "" {
 		v1, err1 := version.NewVersion("9.0")
 		v2, err2 := version.NewVersion(p.ds.Version)
-		if err1 == nil && err2 == nil && v1.LessThan(v2) {
+		if err1 == nil && err2 == nil && v2.Compare(v1) >= 0 {
 			sql += `
 UNION
 SELECT ns.nspname AS schema
