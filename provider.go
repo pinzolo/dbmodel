@@ -5,7 +5,7 @@ import "database/sql"
 // Provider is interface to absorbe difference of each database.
 type Provider interface {
 	// Connect open connection to DataSouce.
-	Connect(ds DataSource) (*sql.DB, error)
+	Connect() (*sql.DB, error)
 	// AllTableNamesSQL should return SQL for loading table names.
 	// Parameters:
 	//     1. schema

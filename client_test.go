@@ -5,7 +5,7 @@ import (
 )
 
 func TestUnconnectedClientRaisesError(t *testing.T) {
-	c := NewClient("postgres", createPostgresDataSource())
+	c := NewClient(createPostgresDataSource("postgres", "9.4"))
 	_, err := c.AllTableNames("sales")
 	if err == nil {
 		t.Errorf("Client should raise error when use on unconnected.")
@@ -16,7 +16,7 @@ func TestUnconnectedClientRaisesError(t *testing.T) {
 }
 
 func TestInvalidDriver(t *testing.T) {
-	c := NewClient("foobar", createPostgresDataSource())
+	c := NewClient(createPostgresDataSource("foobar", "9.4"))
 	c.Connect()
 	defer c.Disconnect()
 	_, err := c.AllTableNames("sales")
@@ -29,7 +29,7 @@ func TestInvalidDriver(t *testing.T) {
 }
 
 func TestUnconnectedClientDisconnectSafe(t *testing.T) {
-	c := NewClient("postgres", createPostgresDataSource())
+	c := NewClient(createPostgresDataSource("postgres", "9.4"))
 	err := c.Disconnect()
 	if err != nil {
 		t.Errorf("Client should not raise error when disconnect on unconnected.")
@@ -37,8 +37,8 @@ func TestUnconnectedClientDisconnectSafe(t *testing.T) {
 }
 
 func TestUseCustomProviderWhenInvalidDriverGiven(t *testing.T) {
-	c := NewClient("foobar", createPostgresDataSource())
-	c.SetProvider(postgres{})
+	c := NewClient(createPostgresDataSource("foobar", "9.4"))
+	c.SetProvider(postgres{ds: createPostgresDataSource("postgres", "9.4")})
 	c.Connect()
 	defer c.Disconnect()
 	_, err := c.AllTableNames("sales")
