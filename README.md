@@ -34,11 +34,10 @@ import (
 
 func main() {
 	// Create DataSouce
-	ds := dbmodel.NewDataSource("localhost", 5432, "postgres", "", "sample", map[string]string{"sslmode": "disable"})
+	ds := dbmodel.NewDataSource("postgres", "9.4", "localhost", 5432, "postgres", "", "sample", map[string]string{"sslmode": "disable"})
 
 	// Create Client
-	// First argument is Driver name. this name is used in sql.Open
-	client := dbmodel.NewClient("postgres", ds)
+	client := dbmodel.NewClient(ds)
 
 	// Connect to Database.
 	client.Connect()
