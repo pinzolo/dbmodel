@@ -862,11 +862,11 @@ func TestPostgresAllTablesConstraintContent(t *testing.T) {
 }
 
 func createPostgresClient() *Client {
-	return NewClient("postgres", createPostgresDataSource())
+	return NewClient(createPostgresDataSource("postgres", "9.4"))
 }
 
-func createPostgresDataSource() DataSource {
-	return NewDataSource("localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
+func createPostgresDataSource(driver string, version string) DataSource {
+	return NewDataSource(driver, version, "localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
 }
 
 func loadPostgresTable(schema string, name string) *Table {

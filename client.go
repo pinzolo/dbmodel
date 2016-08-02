@@ -26,9 +26,8 @@ type Client struct {
 }
 
 // NewClient returns new Client for connecting to given data source.
-// Acceptable driver names are 'postgres'.
-func NewClient(driver string, ds DataSource) *Client {
-	p, err := findProvider(driver)
+func NewClient(ds DataSource) *Client {
+	p, err := findProvider(ds)
 	return &Client{
 		dataSource: ds,
 		provider:   p,
@@ -49,7 +48,7 @@ func (c *Client) Connect() {
 		return
 	}
 
-	c.db, c.err = c.provider.Connect(c.dataSource)
+	c.db, c.err = c.provider.Connect()
 	if c.err != nil {
 		c.db = nil
 	}
@@ -237,9 +236,9 @@ func (c *Client) preCheck(schema string) error {
 	return nil
 }
 
-func findProvider(driver string) (Provider, error) {
-	if driver == "postgres" {
-		return postgres{}, nil
+func findProvider(ds DataSource) (Provider, error) {
+	if ds.Driver == "postgres" {
+		return postgres{ds: ds}, nil
 	}
 	return nil, ErrInvalidDriver
 }
