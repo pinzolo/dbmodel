@@ -6,13 +6,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Custom data types
 -------------------------------------
 
-CREATE DOMAIN "OrderNumber" varchar(25) NULL;
-CREATE DOMAIN "AccountNumber" varchar(15) NULL;
+CREATE DOMAIN "OrderNumber" VARCHAR(25) NULL;
+CREATE DOMAIN "AccountNumber" VARCHAR(15) NULL;
 
-CREATE DOMAIN "Flag" boolean NOT NULL;
-CREATE DOMAIN "NameStyle" boolean NOT NULL;
-CREATE DOMAIN "Name" varchar(50) NULL;
-CREATE DOMAIN "Phone" varchar(25) NULL;
+CREATE DOMAIN "Flag" BOOLEAN NOT NULL;
+CREATE DOMAIN "NameStyle" BOOLEAN NOT NULL;
+CREATE DOMAIN "Name" VARCHAR(50) NULL;
+CREATE DOMAIN "Phone" VARCHAR(25) NULL;
 
 
 -------------------------------------
@@ -22,58 +22,58 @@ CREATE DOMAIN "Phone" varchar(25) NULL;
 CREATE SCHEMA person
   CREATE TABLE business_entity(
     business_entity_id SERIAL, --  NOT FOR REPLICATION
-    rowguid uuid NOT NULL CONSTRAINT "df_business_entity_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_business_entity_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_business_entity_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE person(
-    business_entity_id INT NOT NULL,
-    person_type char(2) NOT NULL,
+    business_entity_id INTEGER NOT NULL,
+    person_type CHAR(2) NOT NULL,
     name_style "NameStyle" NOT NULL CONSTRAINT "df_person_name_style" DEFAULT (false),
-    title varchar(8) NULL,
+    title VARCHAR(8) NULL,
     first_name "Name" NOT NULL,
     middle_name "Name" NULL,
     last_name "Name" NOT NULL,
-    suffix varchar(10) NULL,
-    email_promotion INT NOT NULL CONSTRAINT "df_person_email_promotion" DEFAULT (0),
+    suffix VARCHAR(10) NULL,
+    email_promotion INTEGER NOT NULL CONSTRAINT "df_person_email_promotion" DEFAULT (0),
     additional_contact_info TEXT NULL, -- XML("additional_contact_info_schema_collection"),
     demographics TEXT NULL, -- XML("individual_survey_schema_collection"),
-    rowguid uuid NOT NULL CONSTRAINT "df_person_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_person_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_person_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_person_email_promotion" CHECK (email_promotion BETWEEN 0 AND 2),
     CONSTRAINT "ck_person_person_type" CHECK (person_type IS NULL OR UPPER(person_type) IN ('SC', 'VC', 'IN', 'EM', 'SP', 'GC'))
   )
   CREATE TABLE state_province(
     state_province_id SERIAL,
-    state_province_code char(3) NOT NULL,
-    country_region_code varchar(3) NOT NULL,
+    state_province_code CHAR(3) NOT NULL,
+    country_region_code VARCHAR(3) NOT NULL,
     is_only_state_province_flag "Flag" NOT NULL CONSTRAINT "df_state_province_is_only_state_province_flag" DEFAULT (true),
     name "Name" NOT NULL,
-    territory_id INT NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_state_province_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    territory_id INTEGER NOT NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_state_province_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_state_province_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE address(
     address_id SERIAL, --  NOT FOR REPLICATION
-    address_line1 varchar(60) NOT NULL,
-    address_line2 varchar(60) NULL,
-    city varchar(30) NOT NULL,
-    state_province_id INT NOT NULL,
-    postal_code varchar(15) NOT NULL,
-    spatial_location varchar(44) NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_address_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    address_line1 VARCHAR(60) NOT NULL,
+    address_line2 VARCHAR(60) NULL,
+    city VARCHAR(30) NOT NULL,
+    state_province_id INTEGER NOT NULL,
+    postal_code VARCHAR(15) NOT NULL,
+    spatial_location VARCHAR(44) NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_address_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_address_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE address_type(
     address_type_id SERIAL,
     name "Name" NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_address_type_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_address_type_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_address_type_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE business_entity_address(
-    business_entity_id INT NOT NULL,
-    address_id INT NOT NULL,
-    address_type_id INT NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_business_entity_address_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    business_entity_id INTEGER NOT NULL,
+    address_id INTEGER NOT NULL,
+    address_type_id INTEGER NOT NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_business_entity_address_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_business_entity_address_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE contact_type(
@@ -82,24 +82,24 @@ CREATE SCHEMA person
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_contact_type_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE business_entity_contact(
-    business_entity_id INT NOT NULL,
-    person_id INT NOT NULL,
-    contact_type_id INT NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_business_entity_contact_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    business_entity_id INTEGER NOT NULL,
+    person_id INTEGER NOT NULL,
+    contact_type_id INTEGER NOT NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_business_entity_contact_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_business_entity_contact_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE email_address(
-    business_entity_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
     email_address_id SERIAL,
-    email_address varchar(50) NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_email_address_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    email_address VARCHAR(50) NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_email_address_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_email_address_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE password(
-    business_entity_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
     password_hash VARCHAR(128) NOT NULL,
     password_salt VARCHAR(10) NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_password_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_password_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_password_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE phone_number_type(
@@ -108,13 +108,13 @@ CREATE SCHEMA person
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_phone_number_type_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE person_phone(
-    business_entity_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
     phone_number "Phone" NOT NULL,
-    phone_number_type_id INT NOT NULL,
+    phone_number_type_id INTEGER NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_person_phone_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE country_region(
-    country_region_code varchar(3) NOT NULL,
+    country_region_code VARCHAR(3) NOT NULL,
     name "Name" NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_country_region_modified_date" DEFAULT (NOW())
   );
@@ -129,21 +129,21 @@ CREATE SCHEMA human_resources
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_department_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE employee(
-    business_entity_id INT NOT NULL,
-    national_id_number varchar(15) NOT NULL,
-    login_id varchar(256) NOT NULL,
-    org varchar NULL,-- hierarchyid, will become organization_node
-    organization_level INT NULL, -- AS organization_node.GetLevel(),
-    job_title varchar(50) NOT NULL,
+    business_entity_id INTEGER NOT NULL,
+    national_id_number VARCHAR(15) NOT NULL,
+    login_id VARCHAR(256) NOT NULL,
+    org VARCHAR NULL,-- hierarchyid, will become organization_node
+    organization_level INTEGER NULL, -- AS organization_node.GetLevel(),
+    job_title VARCHAR(50) NOT NULL,
     birth_date DATE NOT NULL,
-    marital_status char(1) NOT NULL,
-    gender char(1) NOT NULL,
+    marital_status CHAR(1) NOT NULL,
+    gender CHAR(1) NOT NULL,
     hire_date DATE NOT NULL,
     salaried_flag "Flag" NOT NULL CONSTRAINT "df_employee_salaried_flag" DEFAULT (true),
-    vacation_hours smallint NOT NULL CONSTRAINT "df_employee_vacation_hours" DEFAULT (0),
-    sick_leave_hours smallint NOT NULL CONSTRAINT "df_employee_sick_leave_hours" DEFAULT (0),
+    vacation_hours SMALLINT NOT NULL CONSTRAINT "df_employee_vacation_hours" DEFAULT (0),
+    sick_leave_hours SMALLINT NOT NULL CONSTRAINT "df_employee_sick_leave_hours" DEFAULT (0),
     current_flag "Flag" NOT NULL CONSTRAINT "df_employee_current_flag" DEFAULT (true),
-    rowguid uuid NOT NULL CONSTRAINT "df_employee_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_employee_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_employee_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_employee_birth_date" CHECK (birth_date BETWEEN '1930-01-01' AND NOW() - INTERVAL '18 years'),
     CONSTRAINT "ck_employee_marital_status" CHECK (UPPER(marital_status) IN ('M', 'S')), -- Married or Single
@@ -153,27 +153,27 @@ CREATE SCHEMA human_resources
     CONSTRAINT "ck_employee_sick_leave_hours" CHECK (sick_leave_hours BETWEEN 0 AND 120)
   )
   CREATE TABLE employee_department_history(
-    business_entity_id INT NOT NULL,
-    department_id smallint NOT NULL,
-    shift_id smallint NOT NULL, -- tinyint
+    business_entity_id INTEGER NOT NULL,
+    department_id SMALLINT NOT NULL,
+    shift_id SMALLINT NOT NULL, -- tinyint
     start_date DATE NOT NULL,
     end_date DATE NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_employee_department_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_employee_department_history_end_date" CHECK ((end_date >= start_date) OR (end_date IS NULL))
   )
   CREATE TABLE employee_pay_history(
-    business_entity_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
     rate_change_date TIMESTAMP NOT NULL,
-    rate numeric NOT NULL, -- money
-    pay_frequency smallint NOT NULL,  -- tinyint
+    rate NUMERIC NOT NULL, -- money
+    pay_frequency SMALLINT NOT NULL,  -- tinyint
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_employee_pay_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_employee_pay_history_pay_frequency" CHECK (pay_frequency IN (1, 2)), -- 1 = monthly salary, 2 = biweekly salary
     CONSTRAINT "ck_employee_pay_history_rate" CHECK (rate BETWEEN 6.50 AND 200.00)
   )
   CREATE TABLE job_candidate(
     job_candidate_id SERIAL NOT NULL, -- int
-    business_entity_id INT NULL,
-    resume varchar NULL, -- XML(hr_resume_schema_collection)
+    business_entity_id INTEGER NULL,
+    resume VARCHAR NULL, -- XML(hr_resume_schema_collection)
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_job_candidate_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE shift(
@@ -193,10 +193,10 @@ ALTER TABLE human_resources.employee DROP COLUMN organization_level;
 ALTER TABLE human_resources.employee ADD organization_node VARCHAR DEFAULT '/';
 -- Convert from all the hex to a stream of hierarchyid bits
 WITH RECURSIVE hier AS (
-  SELECT business_entity_id, org, get_byte(decode(substring(org, 1, 2), 'hex'), 0)::bit(8)::varchar AS bits, 2 AS i
+  SELECT business_entity_id, org, get_byte(decode(substring(org, 1, 2), 'hex'), 0)::bit(8)::VARCHAR AS bits, 2 AS i
     FROM human_resources.employee
   UNION ALL
-  SELECT e.business_entity_id, e.org, hier.bits || get_byte(decode(substring(e.org, i + 1, 2), 'hex'), 0)::bit(8)::varchar, i + 2 AS i
+  SELECT e.business_entity_id, e.org, hier.bits || get_byte(decode(substring(e.org, i + 1, 2), 'hex'), 0)::bit(8)::VARCHAR, i + 2 AS i
     FROM human_resources.employee AS e INNER JOIN
       hier ON e.business_entity_id = hier.business_entity_id AND i < LENGTH(e.org)
 )
@@ -272,12 +272,12 @@ DROP FUNCTION f_convert_org_nodes();
 CREATE SCHEMA production
   CREATE TABLE bill_of_materials(
     bill_of_materials_id SERIAL NOT NULL, -- int
-    product_assembly_id INT NULL,
-    component_id INT NOT NULL,
+    product_assembly_id INTEGER NULL,
+    component_id INTEGER NOT NULL,
     start_date TIMESTAMP NOT NULL CONSTRAINT "df_bill_of_materials_start_date" DEFAULT (NOW()),
     end_date TIMESTAMP NULL,
-    unit_measure_code char(3) NOT NULL,
-    bom_level smallint NOT NULL,
+    unit_measure_code CHAR(3) NOT NULL,
+    bom_level SMALLINT NOT NULL,
     per_assembly_qty decimal(8, 2) NOT NULL CONSTRAINT "df_bill_of_materials_per_assembly_qty" DEFAULT (1.00),
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_bill_of_materials_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_bill_of_materials_end_date" CHECK ((end_date > start_date) OR (end_date IS NULL)),
@@ -288,73 +288,73 @@ CREATE SCHEMA production
     CONSTRAINT "ck_bill_of_materials_per_assembly_qty" CHECK (per_assembly_qty >= 1.00)
   )
   CREATE TABLE culture(
-    culture_id char(6) NOT NULL,
+    culture_id CHAR(6) NOT NULL,
     name "Name" NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_culture_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE document(
-    doc varchar NULL,-- hierarchyid, will become document_node
+    doc VARCHAR NULL,-- hierarchyid, will become document_node
     document_level INTEGER, -- AS document_node.get_level(),
-    title varchar(50) NOT NULL,
-    owner INT NOT NULL,
+    title VARCHAR(50) NOT NULL,
+    owner INTEGER NOT NULL,
     folder_flag "Flag" NOT NULL CONSTRAINT "df_document_folder_flag" DEFAULT (false),
-    file_name varchar(400) NOT NULL,
-    file_extension varchar(8) NULL,
-    revision char(5) NOT NULL,
-    change_number INT NOT NULL CONSTRAINT "df_document_change_number" DEFAULT (0),
-    status smallint NOT NULL, -- tinyint
+    file_name VARCHAR(400) NOT NULL,
+    file_extension VARCHAR(8) NULL,
+    revision CHAR(5) NOT NULL,
+    change_number INTEGER NOT NULL CONSTRAINT "df_document_change_number" DEFAULT (0),
+    status SMALLINT NOT NULL, -- tinyint
     document_summary text NULL,
     document bytea  NULL, -- varbinary
-    rowguid uuid NOT NULL UNIQUE CONSTRAINT "df_document_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL UNIQUE CONSTRAINT "df_document_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_document_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_document_status" CHECK (Status BETWEEN 1 AND 3)
   )
   CREATE TABLE product_category(
     product_category_id SERIAL NOT NULL, -- int
     name "Name" NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_product_category_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_product_category_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_category_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_subcategory(
     product_subcategory_id SERIAL NOT NULL, -- int
-    product_category_id INT NOT NULL,
+    product_category_id INTEGER NOT NULL,
     name "Name" NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_product_subcategory_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_product_subcategory_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_subcategory_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_model(
     product_model_id SERIAL NOT NULL, -- int
     name "Name" NOT NULL,
-    catalog_description varchar NULL, -- XML(production.product_description_schema_collection)
-    instructions varchar NULL, -- XML(production.manu_instructions_schema_collection)
-    rowguid uuid NOT NULL CONSTRAINT "df_product_model_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    catalog_description VARCHAR NULL, -- XML(production.product_description_schema_collection)
+    instructions VARCHAR NULL, -- XML(production.manu_instructions_schema_collection)
+    rowguid UUID NOT NULL CONSTRAINT "df_product_model_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_model_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product(
     product_id SERIAL NOT NULL, -- int
     name "Name" NOT NULL,
-    product_number varchar(25) NOT NULL,
+    product_number VARCHAR(25) NOT NULL,
     make_flag "Flag" NOT NULL CONSTRAINT "df_product_make_flag" DEFAULT (true),
     finished_goods_flag "Flag" NOT NULL CONSTRAINT "df_product_finished_goods_flag" DEFAULT (true),
-    color varchar(15) NULL,
-    safety_stock_level smallint NOT NULL,
-    reorder_point smallint NOT NULL,
-    standard_cost numeric NOT NULL, -- money
-    list_price numeric NOT NULL, -- money
-    size varchar(5) NULL,
-    size_unit_measure_code char(3) NULL,
-    weight_unit_measure_code char(3) NULL,
+    color VARCHAR(15) NULL,
+    safety_stock_level SMALLINT NOT NULL,
+    reorder_point SMALLINT NOT NULL,
+    standard_cost NUMERIC NOT NULL, -- money
+    list_price NUMERIC NOT NULL, -- money
+    size VARCHAR(5) NULL,
+    size_unit_measure_code CHAR(3) NULL,
+    weight_unit_measure_code CHAR(3) NULL,
     weight decimal(8, 2) NULL,
-    days_to_manufacture INT NOT NULL,
-    product_line char(2) NULL,
-    class char(2) NULL,
-    style char(2) NULL,
-    product_subcategory_id INT NULL,
-    product_model_id INT NULL,
+    days_to_manufacture INTEGER NOT NULL,
+    product_line CHAR(2) NULL,
+    class CHAR(2) NULL,
+    style CHAR(2) NULL,
+    product_subcategory_id INTEGER NULL,
+    product_model_id INTEGER NULL,
     sell_start_date TIMESTAMP NOT NULL,
     sell_end_date TIMESTAMP NULL,
     discontinued_date TIMESTAMP NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_product_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_product_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_product_safety_stock_level" CHECK (safety_stock_level > 0),
     CONSTRAINT "ck_product_reorder_point" CHECK (reorder_point > 0),
@@ -368,92 +368,92 @@ CREATE SCHEMA production
     CONSTRAINT "ck_product_sell_end_date" CHECK ((sell_end_date >= sell_start_date) OR (sell_end_date IS NULL))
   )
   CREATE TABLE product_cost_history(
-    product_id INT NOT NULL,
+    product_id INTEGER NOT NULL,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NULL,
-    standard_cost numeric NOT NULL,  -- money
+    standard_cost NUMERIC NOT NULL,  -- money
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_cost_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_product_cost_history_end_date" CHECK ((end_date >= start_date) OR (end_date IS NULL)),
     CONSTRAINT "ck_product_cost_history_standard_cost" CHECK (standard_cost >= 0.00)
   )
   CREATE TABLE product_description(
     product_description_id SERIAL NOT NULL, -- int
-    description varchar(400) NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_product_description_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    description VARCHAR(400) NOT NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_product_description_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_description_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_document(
-    product_id INT NOT NULL,
-    doc varchar NOT NULL, -- hierarchy_id, will become document_node
+    product_id INTEGER NOT NULL,
+    doc VARCHAR NOT NULL, -- hierarchy_id, will become document_node
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_document_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE location(
     location_id SERIAL NOT NULL, -- smallint
     name "Name" NOT NULL,
-    cost_rate numeric NOT NULL CONSTRAINT "df_location_cost_rate" DEFAULT (0.00), -- smallmoney -- money
+    cost_rate NUMERIC NOT NULL CONSTRAINT "df_location_cost_rate" DEFAULT (0.00), -- smallmoney -- money
     availability decimal(8, 2) NOT NULL CONSTRAINT "df_location_availability" DEFAULT (0.00),
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_location_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_location_cost_rate" CHECK (cost_rate >= 0.00),
     CONSTRAINT "ck_location_availability" CHECK (availability >= 0.00)
   )
   CREATE TABLE product_inventory(
-    product_id INT NOT NULL,
-    location_id smallint NOT NULL,
-    shelf varchar(10) NOT NULL,
-    bin smallint NOT NULL, -- tinyint
-    quantity smallint NOT NULL CONSTRAINT "df_product_inventory_quantity" DEFAULT (0),
-    rowguid uuid NOT NULL CONSTRAINT "df_product_inventory_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    product_id INTEGER NOT NULL,
+    location_id SMALLINT NOT NULL,
+    shelf VARCHAR(10) NOT NULL,
+    bin SMALLINT NOT NULL, -- tinyint
+    quantity SMALLINT NOT NULL CONSTRAINT "df_product_inventory_quantity" DEFAULT (0),
+    rowguid UUID NOT NULL CONSTRAINT "df_product_inventory_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_inventory_modified_date" DEFAULT (NOW()),
 --    CONSTRAINT "ck_product_inventory_shelf" CHECK ((shelf LIKE 'AZa-z]') OR (shelf = 'N/A')),
     CONSTRAINT "ck_product_inventory_bin" CHECK (bin BETWEEN 0 AND 100)
   )
   CREATE TABLE product_list_price_history(
-    product_id INT NOT NULL,
+    product_id INTEGER NOT NULL,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NULL,
-    list_price numeric NOT NULL,  -- money
+    list_price NUMERIC NOT NULL,  -- money
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_list_price_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_product_list_price_history_end_date" CHECK ((end_date >= start_date) OR (end_date IS NULL)),
     CONSTRAINT "ck_product_list_price_history_list_price" CHECK (list_price > 0.00)
   )
   CREATE TABLE illustration(
     illustration_id SERIAL NOT NULL, -- int
-    diagram varchar NULL,  -- XML
+    diagram VARCHAR NULL,  -- XML
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_illustration_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_model_illustration(
-    product_model_id INT NOT NULL,
-    illustration_id INT NOT NULL,
+    product_model_id INTEGER NOT NULL,
+    illustration_id INTEGER NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_model_illustration_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_model_product_description_culture(
-    product_model_id INT NOT NULL,
-    product_description_id INT NOT NULL,
-    culture_id char(6) NOT NULL,
+    product_model_id INTEGER NOT NULL,
+    product_description_id INTEGER NOT NULL,
+    culture_id CHAR(6) NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_model_product_description_culture_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_photo(
     product_photo_id SERIAL NOT NULL, -- int
     thumb_nail_photo bytea NULL,-- varbinary
-    thumbnail_photo_file_name varchar(50) NULL,
+    thumbnail_photo_file_name VARCHAR(50) NULL,
     large_photo bytea NULL,-- varbinary
-    large_photo_file_name varchar(50) NULL,
+    large_photo_file_name VARCHAR(50) NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_photo_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_product_photo(
-    product_id INT NOT NULL,
-    product_photo_id INT NOT NULL,
+    product_id INTEGER NOT NULL,
+    product_photo_id INTEGER NOT NULL,
     "primary" "Flag" NOT NULL CONSTRAINT "df_product_product_photo_primary" DEFAULT (false),
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_product_photo_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE product_review(
     product_review_id SERIAL NOT NULL, -- int
-    product_id INT NOT NULL,
+    product_id INTEGER NOT NULL,
     reviewer_name "Name" NOT NULL,
     review_date TIMESTAMP NOT NULL CONSTRAINT "df_product_review_review_date" DEFAULT (NOW()),
-    email_address varchar(50) NOT NULL,
-    rating INT NOT NULL,
-    comments varchar(3850),
+    email_address VARCHAR(50) NOT NULL,
+    rating INTEGER NOT NULL,
+    comments VARCHAR(3850),
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_review_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_product_review_rating" CHECK (rating BETWEEN 1 AND 5)
   )
@@ -463,61 +463,61 @@ CREATE SCHEMA production
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_scrap_reason_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE transaction_history(
-    transaction_id SERIAL NOT NULL, -- INT IDENTITY (100000, 1)
-    product_id INT NOT NULL,
-    reference_order_id INT NOT NULL,
-    reference_order_line_id INT NOT NULL CONSTRAINT "df_transaction_history_reference_order_line_id" DEFAULT (0),
+    transaction_id SERIAL NOT NULL, -- INTEGER IDENTITY (100000, 1)
+    product_id INTEGER NOT NULL,
+    reference_order_id INTEGER NOT NULL,
+    reference_order_line_id INTEGER NOT NULL CONSTRAINT "df_transaction_history_reference_order_line_id" DEFAULT (0),
     transaction_date TIMESTAMP NOT NULL CONSTRAINT "df_transaction_history_transaction_date" DEFAULT (NOW()),
-    transaction_type char(1) NOT NULL,
-    quantity INT NOT NULL,
-    actual_cost numeric NOT NULL,  -- money
+    transaction_type CHAR(1) NOT NULL,
+    quantity INTEGER NOT NULL,
+    actual_cost NUMERIC NOT NULL,  -- money
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_transaction_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_transaction_history_transaction_type" CHECK (UPPER(transaction_type) IN ('W', 'S', 'P'))
   )
   CREATE TABLE transaction_history_archive(
-    transaction_id INT NOT NULL,
-    product_id INT NOT NULL,
-    reference_order_id INT NOT NULL,
-    reference_order_line_id INT NOT NULL CONSTRAINT "df_transaction_history_archive_reference_order_line_id" DEFAULT (0),
+    transaction_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    reference_order_id INTEGER NOT NULL,
+    reference_order_line_id INTEGER NOT NULL CONSTRAINT "df_transaction_history_archive_reference_order_line_id" DEFAULT (0),
     transaction_date TIMESTAMP NOT NULL CONSTRAINT "df_transaction_history_archive_transaction_date" DEFAULT (NOW()),
-    transaction_type char(1) NOT NULL,
-    quantity INT NOT NULL,
-    actual_cost numeric NOT NULL,  -- money
+    transaction_type CHAR(1) NOT NULL,
+    quantity INTEGER NOT NULL,
+    actual_cost NUMERIC NOT NULL,  -- money
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_transaction_history_archive_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_transaction_history_archive_transaction_type" CHECK (UPPER(transaction_type) IN ('W', 'S', 'P'))
   )
   CREATE TABLE unit_measure(
-    unit_measure_code char(3) NOT NULL,
+    unit_measure_code CHAR(3) NOT NULL,
     name "Name" NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_unit_measure_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE work_order(
     work_order_id SERIAL NOT NULL, -- int
-    product_id INT NOT NULL,
-    order_qty INT NOT NULL,
+    product_id INTEGER NOT NULL,
+    order_qty INTEGER NOT NULL,
     stocked_qty int, -- AS ISNULL(order_qty - scrapped_qty, 0),
-    scrapped_qty smallint NOT NULL,
+    scrapped_qty SMALLINT NOT NULL,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NULL,
     due_date TIMESTAMP NOT NULL,
-    scrap_reason_id smallint NULL,
+    scrap_reason_id SMALLINT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_work_order_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_work_order_order_qty" CHECK (order_qty > 0),
     CONSTRAINT "ck_work_order_scrapped_qty" CHECK (scrapped_qty >= 0),
     CONSTRAINT "ck_work_order_end_date" CHECK ((end_date >= start_date) OR (end_date IS NULL))
   )
   CREATE TABLE work_order_routing(
-    work_order_id INT NOT NULL,
-    product_id INT NOT NULL,
-    operation_sequence smallint NOT NULL,
-    location_id smallint NOT NULL,
+    work_order_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    operation_sequence SMALLINT NOT NULL,
+    location_id SMALLINT NOT NULL,
     scheduled_start_date TIMESTAMP NOT NULL,
     scheduled_end_date TIMESTAMP NOT NULL,
     actual_start_date TIMESTAMP NULL,
     actual_end_date TIMESTAMP NULL,
     actual_resource_hrs decimal(9, 4) NULL,
-    planned_cost numeric NOT NULL, -- money
-    actual_cost numeric NULL,  -- money
+    planned_cost NUMERIC NOT NULL, -- money
+    actual_cost NUMERIC NULL,  -- money
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_work_order_routing_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_work_order_routing_scheduled_end_date" CHECK (scheduled_end_date >= scheduled_start_date),
     CONSTRAINT "ck_work_order_routing_actual_end_date" CHECK ((actual_end_date >= actual_start_date)
@@ -537,10 +537,10 @@ ALTER TABLE production.document DROP COLUMN document_level;
 ALTER TABLE production.document ADD document_node VARCHAR DEFAULT '/';
 -- Convert from all the hex to a stream of hierarchyid bits
 WITH RECURSIVE hier AS (
-  SELECT rowguid, doc, get_byte(decode(substring(doc, 1, 2), 'hex'), 0)::bit(8)::varchar AS bits, 2 AS i
+  SELECT rowguid, doc, get_byte(decode(substring(doc, 1, 2), 'hex'), 0)::bit(8)::VARCHAR AS bits, 2 AS i
     FROM production.document
   UNION ALL
-  SELECT e.rowguid, e.doc, hier.bits || get_byte(decode(substring(e.doc, i + 1, 2), 'hex'), 0)::bit(8)::varchar, i + 2 AS i
+  SELECT e.rowguid, e.doc, hier.bits || get_byte(decode(substring(e.doc, i + 1, 2), 'hex'), 0)::bit(8)::VARCHAR, i + 2 AS i
     FROM production.document AS e INNER JOIN
       hier ON e.rowguid = hier.rowguid AND i < LENGTH(e.doc)
 )
@@ -615,13 +615,13 @@ DROP FUNCTION f_convert_doc_nodes();
 
 -- ProductDocument HierarchyID column
   ALTER TABLE production.product_document ADD document_node VARCHAR DEFAULT '/';
-ALTER TABLE production.product_document ADD rowguid uuid NOT NULL CONSTRAINT "df_product_document_rowguid" DEFAULT (uuid_generate_v1());
+ALTER TABLE production.product_document ADD rowguid UUID NOT NULL CONSTRAINT "df_product_document_rowguid" DEFAULT (uuid_generate_v1());
 -- Convert from all the hex to a stream of hierarchyid bits
 WITH RECURSIVE hier AS (
-  SELECT rowguid, doc, get_byte(decode(substring(doc, 1, 2), 'hex'), 0)::bit(8)::varchar AS bits, 2 AS i
+  SELECT rowguid, doc, get_byte(decode(substring(doc, 1, 2), 'hex'), 0)::bit(8)::VARCHAR AS bits, 2 AS i
     FROM production.product_document
   UNION ALL
-  SELECT e.rowguid, e.doc, hier.bits || get_byte(decode(substring(e.doc, i + 1, 2), 'hex'), 0)::bit(8)::varchar, i + 2 AS i
+  SELECT e.rowguid, e.doc, hier.bits || get_byte(decode(substring(e.doc, i + 1, 2), 'hex'), 0)::bit(8)::VARCHAR, i + 2 AS i
     FROM production.product_document AS e INNER JOIN
       hier ON e.rowguid = hier.rowguid AND i < LENGTH(e.doc)
 )
@@ -701,16 +701,16 @@ ALTER TABLE production.product_document DROP COLUMN rowguid;
 
 CREATE SCHEMA purchasing
   CREATE TABLE product_vendor(
-    product_id INT NOT NULL,
-    business_entity_id INT NOT NULL,
-    average_lead_time INT NOT NULL,
-    standard_price numeric NOT NULL, -- money
-    last_receipt_cost numeric NULL, -- money
+    product_id INTEGER NOT NULL,
+    business_entity_id INTEGER NOT NULL,
+    average_lead_time INTEGER NOT NULL,
+    standard_price NUMERIC NOT NULL, -- money
+    last_receipt_cost NUMERIC NULL, -- money
     last_receipt_date TIMESTAMP NULL,
-    min_order_qty INT NOT NULL,
-    max_order_qty INT NOT NULL,
-    on_order_qty INT NULL,
-    unit_measure_code char(3) NOT NULL,
+    min_order_qty INTEGER NOT NULL,
+    max_order_qty INTEGER NOT NULL,
+    on_order_qty INTEGER NULL,
+    unit_measure_code CHAR(3) NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_product_vendor_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_product_vendor_average_lead_time" CHECK (average_lead_time >= 1),
     CONSTRAINT "ck_product_vendor_standard_price" CHECK (standard_price > 0.00),
@@ -720,12 +720,12 @@ CREATE SCHEMA purchasing
     CONSTRAINT "ck_product_vendor_on_order_qty" CHECK (on_order_qty >= 0)
   )
   CREATE TABLE purchase_order_detail(
-    purchase_order_id INT NOT NULL,
+    purchase_order_id INTEGER NOT NULL,
     purchase_order_detail_id SERIAL NOT NULL, -- int
     due_date TIMESTAMP NOT NULL,
-    order_qty smallint NOT NULL,
-    product_id INT NOT NULL,
-    unit_price numeric NOT NULL, -- money
+    order_qty SMALLINT NOT NULL,
+    product_id INTEGER NOT NULL,
+    unit_price NUMERIC NOT NULL, -- money
     line_total numeric, -- AS ISNULL(OrderQty * UnitPrice, 0.00),
     received_qty decimal(8, 2) NOT NULL,
     rejected_qty decimal(8, 2) NOT NULL,
@@ -738,16 +738,16 @@ CREATE SCHEMA purchasing
   )
   CREATE TABLE purchase_order_header(
     purchase_order_id SERIAL NOT NULL,  -- int
-    revision_number smallint NOT NULL CONSTRAINT "df_purchase_order_header_revision_number" DEFAULT (0),  -- tinyint
-    status smallint NOT NULL CONSTRAINT "df_purchase_order_header_status" DEFAULT (1),  -- tinyint
-    employee_id INT NOT NULL,
-    vendor_id INT NOT NULL,
-    ship_method_id INT NOT NULL,
+    revision_number SMALLINT NOT NULL CONSTRAINT "df_purchase_order_header_revision_number" DEFAULT (0),  -- tinyint
+    status SMALLINT NOT NULL CONSTRAINT "df_purchase_order_header_status" DEFAULT (1),  -- tinyint
+    employee_id INTEGER NOT NULL,
+    vendor_id INTEGER NOT NULL,
+    ship_method_id INTEGER NOT NULL,
     order_date TIMESTAMP NOT NULL CONSTRAINT "df_purchase_order_header_order_date" DEFAULT (NOW()),
     ship_date TIMESTAMP NULL,
-    sub_total numeric NOT NULL CONSTRAINT "df_purchase_order_header_sub_total" DEFAULT (0.00),  -- money
-    tax_amt numeric NOT NULL CONSTRAINT "df_purchase_order_header_tax_amt" DEFAULT (0.00),  -- money
-    freight numeric NOT NULL CONSTRAINT "df_purchase_order_header_freight" DEFAULT (0.00),  -- money
+    sub_total NUMERIC NOT NULL CONSTRAINT "df_purchase_order_header_sub_total" DEFAULT (0.00),  -- money
+    tax_amt NUMERIC NOT NULL CONSTRAINT "df_purchase_order_header_tax_amt" DEFAULT (0.00),  -- money
+    freight NUMERIC NOT NULL CONSTRAINT "df_purchase_order_header_freight" DEFAULT (0.00),  -- money
     total_due numeric, -- AS ISNULL(sub_total + tax_amt + freight, 0) PERSISTED NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_purchase_order_header_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_purchase_order_header_status" CHECK (status BETWEEN 1 AND 4), -- 1 = Pending; 2 = Approved; 3 = Rejected; 4 = Complete
@@ -759,21 +759,21 @@ CREATE SCHEMA purchasing
   CREATE TABLE ship_method(
     ship_method_id SERIAL NOT NULL, -- int
     name "Name" NOT NULL,
-    ship_base numeric NOT NULL CONSTRAINT "df_ship_method_ship_base" DEFAULT (0.00), -- money
-    ship_rate numeric NOT NULL CONSTRAINT "df_ship_method_ship_rate" DEFAULT (0.00), -- money
-    rowguid uuid NOT NULL CONSTRAINT "df_ship_method_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    ship_base NUMERIC NOT NULL CONSTRAINT "df_ship_method_ship_base" DEFAULT (0.00), -- money
+    ship_rate NUMERIC NOT NULL CONSTRAINT "df_ship_method_ship_rate" DEFAULT (0.00), -- money
+    rowguid UUID NOT NULL CONSTRAINT "df_ship_method_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_ship_method_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_ship_method_ship_base" CHECK (ship_base > 0.00),
     CONSTRAINT "ck_ship_method_ship_rate" CHECK (ship_rate > 0.00)
   )
   CREATE TABLE vendor(
-    business_entity_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
     account_number "AccountNumber" NOT NULL,
     name "Name" NOT NULL,
-    credit_rating smallint NOT NULL, -- tinyint
+    credit_rating SMALLINT NOT NULL, -- tinyint
     preferred_vendor_status "Flag" NOT NULL CONSTRAINT "df_vendor_preferred_vendor_status" DEFAULT (true),
     active_flag "Flag" NOT NULL CONSTRAINT "df_vendor_active_flag" DEFAULT (true),
-    purchasing_web_service_url varchar(1024) NULL,
+    purchasing_web_service_url VARCHAR(1024) NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_vendor_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_vendor_credit_rating" CHECK (credit_rating BETWEEN 1 AND 5)
   );
@@ -787,58 +787,58 @@ ALTER TABLE purchasing.purchase_order_header DROP COLUMN total_due;
 
 CREATE SCHEMA sales
   CREATE TABLE country_region_currency(
-    country_region_code varchar(3) NOT NULL,
-    currency_code char(3) NOT NULL,
+    country_region_code VARCHAR(3) NOT NULL,
+    currency_code CHAR(3) NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_country_region_currency_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE credit_card(
     credit_card_id SERIAL NOT NULL, -- int
-    card_type varchar(50) NOT NULL,
-    card_number varchar(25) NOT NULL,
-    exp_month smallint NOT NULL, -- tinyint
-    exp_year smallint NOT NULL,
+    card_type VARCHAR(50) NOT NULL,
+    card_number VARCHAR(25) NOT NULL,
+    exp_month SMALLINT NOT NULL, -- tinyint
+    exp_year SMALLINT NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_credit_card_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE currency(
-    currency_code char(3) NOT NULL,
+    currency_code CHAR(3) NOT NULL,
     name "Name" NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_currency_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE currency_rate(
     currency_rate_id SERIAL NOT NULL, -- int
     currency_rate_date TIMESTAMP NOT NULL,
-    from_currency_code char(3) NOT NULL,
-    to_currency_code char(3) NOT NULL,
-    average_rate numeric NOT NULL, -- money
-    end_of_day_rate numeric NOT NULL,  -- money
+    from_currency_code CHAR(3) NOT NULL,
+    to_currency_code CHAR(3) NOT NULL,
+    average_rate NUMERIC NOT NULL, -- money
+    end_of_day_rate NUMERIC NOT NULL,  -- money
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_currency_rate_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE customer(
     customer_id SERIAL NOT NULL, --  NOT FOR REPLICATION -- int
     -- A customer may either be a person, a store, or a person who works for a store
-    person_id INT NULL, -- If this customer represents a person, this is non-null
-    store_id INT NULL,  -- If the customer is a store, or is associated with a store then this is non-null.
-    territory_id INT NULL,
+    person_id INTEGER NULL, -- If this customer represents a person, this is non-null
+    store_id INTEGER NULL,  -- If the customer is a store, or is associated with a store then this is non-null.
+    territory_id INTEGER NULL,
     account_number VARCHAR, -- AS ISNULL('AW' + dbo.ufnLeadingZeros(CustomerID), ''),
-    rowguid uuid NOT NULL CONSTRAINT "df_customer_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_customer_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_customer_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE person_credit_card(
-    business_entity_id INT NOT NULL,
-    credit_card_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
+    credit_card_id INTEGER NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_person_credit_card_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE sales_order_detail(
-    sales_order_id INT NOT NULL,
+    sales_order_id INTEGER NOT NULL,
     sales_order_detail_id SERIAL NOT NULL, -- int
-    carrier_tracking_number varchar(25) NULL,
-    order_qty smallint NOT NULL,
-    product_id INT NOT NULL,
-    special_offer_id INT NOT NULL,
-    unit_price numeric NOT NULL, -- money
-    unit_price_discount numeric NOT NULL CONSTRAINT "df_sales_order_detail_unit_price_discount" DEFAULT (0.0), -- money
+    carrier_tracking_number VARCHAR(25) NULL,
+    order_qty SMALLINT NOT NULL,
+    product_id INTEGER NOT NULL,
+    special_offer_id INTEGER NOT NULL,
+    unit_price NUMERIC NOT NULL, -- money
+    unit_price_discount NUMERIC NOT NULL CONSTRAINT "df_sales_order_detail_unit_price_discount" DEFAULT (0.0), -- money
     line_total numeric, -- AS ISNULL(UnitPrice * (1.0 - UnitPriceDiscount) * OrderQty, 0.0),
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_order_detail_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_order_detail_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_order_detail_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_order_detail_order_qty" CHECK (order_qty > 0),
     CONSTRAINT "ck_sales_order_detail_unit_price" CHECK (unit_price >= 0.00),
@@ -846,30 +846,30 @@ CREATE SCHEMA sales
   )
   CREATE TABLE sales_order_header(
     sales_order_id SERIAL NOT NULL, --  NOT FOR REPLICATION -- int
-    revision_number smallint NOT NULL CONSTRAINT "df_sales_order_header_revision_number" DEFAULT (0), -- tinyint
+    revision_number SMALLINT NOT NULL CONSTRAINT "df_sales_order_header_revision_number" DEFAULT (0), -- tinyint
     order_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_order_header_order_date" DEFAULT (NOW()),
     due_date TIMESTAMP NOT NULL,
     ship_date TIMESTAMP NULL,
-    status smallint NOT NULL CONSTRAINT "df_sales_order_header_status" DEFAULT (1), -- tinyint
+    status SMALLINT NOT NULL CONSTRAINT "df_sales_order_header_status" DEFAULT (1), -- tinyint
     online_order_flag "Flag" NOT NULL CONSTRAINT "df_sales_order_header_online_order_flag" DEFAULT (true),
-    sales_order_number VARCHAR(23), -- AS ISNULL(N'SO' + CONVERT(nvarchar(23), sales_order_id), N'*** ERROR ***'),
+    sales_order_number VARCHAR(23), -- AS ISNULL(N'SO' + CONVERT(nVARCHAR(23), sales_order_id), N'*** ERROR ***'),
     purchase_order_number "OrderNumber" NULL,
     account_number "AccountNumber" NULL,
-    customer_id INT NOT NULL,
-    sales_person_id INT NULL,
-    territory_id INT NULL,
-    bill_to_address_id INT NOT NULL,
-    ship_to_address_id INT NOT NULL,
-    ship_method_id INT NOT NULL,
-    credit_card_id INT NULL,
-    credit_card_approval_code varchar(15) NULL,
-    currency_rate_id INT NULL,
-    sub_total numeric NOT NULL CONSTRAINT "df_sales_order_header_sub_total" DEFAULT (0.00), -- money
-    tax_amt numeric NOT NULL CONSTRAINT "df_sales_order_header_tax_amt" DEFAULT (0.00), -- money
-    freight numeric NOT NULL CONSTRAINT "df_sales_order_header_freight" DEFAULT (0.00), -- money
+    customer_id INTEGER NOT NULL,
+    sales_person_id INTEGER NULL,
+    territory_id INTEGER NULL,
+    bill_to_address_id INTEGER NOT NULL,
+    ship_to_address_id INTEGER NOT NULL,
+    ship_method_id INTEGER NOT NULL,
+    credit_card_id INTEGER NULL,
+    credit_card_approval_code VARCHAR(15) NULL,
+    currency_rate_id INTEGER NULL,
+    sub_total NUMERIC NOT NULL CONSTRAINT "df_sales_order_header_sub_total" DEFAULT (0.00), -- money
+    tax_amt NUMERIC NOT NULL CONSTRAINT "df_sales_order_header_tax_amt" DEFAULT (0.00), -- money
+    freight NUMERIC NOT NULL CONSTRAINT "df_sales_order_header_freight" DEFAULT (0.00), -- money
     total_due numeric, -- AS ISNULL(SubTotal + TaxAmt + Freight, 0),
-    comment varchar(128) NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_order_header_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    comment VARCHAR(128) NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_order_header_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_order_header_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_order_header_status" CHECK (status BETWEEN 0 AND 8),
     CONSTRAINT "ck_sales_order_header_due_date" CHECK (due_date >= order_date),
@@ -879,19 +879,19 @@ CREATE SCHEMA sales
     CONSTRAINT "ck_sales_order_header_freight" CHECK (freight >= 0.00)
   )
   CREATE TABLE sales_order_header_sales_reason(
-    sales_order_id INT NOT NULL,
-    sales_reason_id INT NOT NULL,
+    sales_order_id INTEGER NOT NULL,
+    sales_reason_id INTEGER NOT NULL,
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_order_header_sales_reason_modified_date" DEFAULT (NOW())
   )
   CREATE TABLE sales_person(
-    business_entity_id INT NOT NULL,
-    territory_id INT NULL,
-    sales_quota numeric NULL, -- money
-    bonus numeric NOT NULL CONSTRAINT "df_sales_person_bonus" DEFAULT (0.00), -- money
-    commission_pct numeric NOT NULL CONSTRAINT "df_sales_person_commission_pct" DEFAULT (0.00), -- smallmoney -- money
-    sales_ytd numeric NOT NULL CONSTRAINT "df_sales_person_sales_ytd" DEFAULT (0.00), -- money
-    sales_last_year numeric NOT NULL CONSTRAINT "df_sales_person_sales_last_year" DEFAULT (0.00), -- money
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_person_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    business_entity_id INTEGER NOT NULL,
+    territory_id INTEGER NULL,
+    sales_quota NUMERIC NULL, -- money
+    bonus NUMERIC NOT NULL CONSTRAINT "df_sales_person_bonus" DEFAULT (0.00), -- money
+    commission_pct NUMERIC NOT NULL CONSTRAINT "df_sales_person_commission_pct" DEFAULT (0.00), -- smallmoney -- money
+    sales_ytd NUMERIC NOT NULL CONSTRAINT "df_sales_person_sales_ytd" DEFAULT (0.00), -- money
+    sales_last_year NUMERIC NOT NULL CONSTRAINT "df_sales_person_sales_last_year" DEFAULT (0.00), -- money
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_person_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_person_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_person_sales_quota" CHECK (sales_quota > 0.00),
     CONSTRAINT "ck_sales_person_bonus" CHECK (bonus >= 0.00),
@@ -900,10 +900,10 @@ CREATE SCHEMA sales
     CONSTRAINT "ck_sales_person_sales_last_year" CHECK (sales_last_year >= 0.00)
   )
   CREATE TABLE sales_person_quota_history(
-    business_entity_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,
     quota_date TIMESTAMP NOT NULL,
-    sales_quota numeric NOT NULL, -- money
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_person_quota_history_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    sales_quota NUMERIC NOT NULL, -- money
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_person_quota_history_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_person_quota_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_person_quota_history_sales_quota" CHECK (sales_quota > 0.00)
   )
@@ -915,24 +915,24 @@ CREATE SCHEMA sales
   )
   CREATE TABLE sales_tax_rate(
     sales_tax_rate_id SERIAL NOT NULL, -- int
-    state_province_id INT NOT NULL,
-    tax_type smallint NOT NULL, -- tinyint
-    tax_rate numeric NOT NULL CONSTRAINT "df_sales_tax_rate_tax_rate" DEFAULT (0.00), -- smallmoney -- money
+    state_province_id INTEGER NOT NULL,
+    tax_type SMALLINT NOT NULL, -- tinyint
+    tax_rate NUMERIC NOT NULL CONSTRAINT "df_sales_tax_rate_tax_rate" DEFAULT (0.00), -- smallmoney -- money
     name "Name" NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_tax_rate_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_tax_rate_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_tax_rate_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_tax_rate_tax_type" CHECK (tax_type BETWEEN 1 AND 3)
   )
   CREATE TABLE sales_territory(
     territory_id SERIAL NOT NULL, -- int
     name "Name" NOT NULL,
-    country_region_code varchar(3) NOT NULL,
-    "group" varchar(50) NOT NULL, -- Group
-    sales_ytd numeric NOT NULL CONSTRAINT "df_sales_territory_sales_ytd" DEFAULT (0.00), -- money
-    sales_last_year numeric NOT NULL CONSTRAINT "df_sales_territory_sales_last_year" DEFAULT (0.00), -- money
-    cost_ytd numeric NOT NULL CONSTRAINT "df_sales_territory_cost_ytd" DEFAULT (0.00), -- money
-    cost_last_year numeric NOT NULL CONSTRAINT "df_sales_territory_cost_last_year" DEFAULT (0.00), -- money
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_territory_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    country_region_code VARCHAR(3) NOT NULL,
+    "group" VARCHAR(50) NOT NULL, -- Group
+    sales_ytd NUMERIC NOT NULL CONSTRAINT "df_sales_territory_sales_ytd" DEFAULT (0.00), -- money
+    sales_last_year NUMERIC NOT NULL CONSTRAINT "df_sales_territory_sales_last_year" DEFAULT (0.00), -- money
+    cost_ytd NUMERIC NOT NULL CONSTRAINT "df_sales_territory_cost_ytd" DEFAULT (0.00), -- money
+    cost_last_year NUMERIC NOT NULL CONSTRAINT "df_sales_territory_cost_last_year" DEFAULT (0.00), -- money
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_territory_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_territory_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_territory_sales_ytd" CHECK (sales_ytd >= 0.00),
     CONSTRAINT "ck_sales_territory_sales_last_year" CHECK (sales_last_year >= 0.00),
@@ -940,34 +940,34 @@ CREATE SCHEMA sales
     CONSTRAINT "ck_sales_territory_cost_last_year" CHECK (cost_last_year >= 0.00)
   )
   CREATE TABLE sales_territory_history(
-    business_entity_id INT NOT NULL,  -- A sales person
-    territory_id INT NOT NULL,
+    business_entity_id INTEGER NOT NULL,  -- A sales person
+    territory_id INTEGER NOT NULL,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_sales_territory_history_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    rowguid UUID NOT NULL CONSTRAINT "df_sales_territory_history_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_sales_territory_history_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_sales_territory_history_end_date" CHECK ((end_date >= start_date) OR (end_date IS NULL))
   )
   CREATE TABLE shopping_cart_item(
     shopping_cart_item_id SERIAL NOT NULL, -- int
-    shopping_cart_id varchar(50) NOT NULL,
-    quantity INT NOT NULL CONSTRAINT "df_shopping_cart_item_quantity" DEFAULT (1),
-    product_id INT NOT NULL,
+    shopping_cart_id VARCHAR(50) NOT NULL,
+    quantity INTEGER NOT NULL CONSTRAINT "df_shopping_cart_item_quantity" DEFAULT (1),
+    product_id INTEGER NOT NULL,
     date_created TIMESTAMP NOT NULL CONSTRAINT "df_shopping_cart_item_date_created" DEFAULT (NOW()),
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_shopping_cart_item_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_shopping_cart_item_quantity" CHECK (quantity >= 1)
   )
   CREATE TABLE special_offer(
     special_offer_id SERIAL NOT NULL, -- int
-    description varchar(255) NOT NULL,
-    discount_pct numeric NOT NULL CONSTRAINT "df_special_offer_discount_pct" DEFAULT (0.00), -- smallmoney -- money
-    type varchar(50) NOT NULL,
-    category varchar(50) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    discount_pct NUMERIC NOT NULL CONSTRAINT "df_special_offer_discount_pct" DEFAULT (0.00), -- smallmoney -- money
+    type VARCHAR(50) NOT NULL,
+    category VARCHAR(50) NOT NULL,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
-    min_qty INT NOT NULL CONSTRAINT "df_special_offer_min_qty" DEFAULT (0),
-    max_qty INT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_special_offer_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    min_qty INTEGER NOT NULL CONSTRAINT "df_special_offer_min_qty" DEFAULT (0),
+    max_qty INTEGER NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_special_offer_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_special_offer_modified_date" DEFAULT (NOW()),
     CONSTRAINT "ck_special_offer_end_date" CHECK (end_date >= start_date),
     CONSTRAINT "ck_special_offer_discount_pct" CHECK (discount_pct >= 0.00),
@@ -975,17 +975,17 @@ CREATE SCHEMA sales
     CONSTRAINT "ck_special_offer_max_qty"  CHECK (max_qty >= 0)
   )
   CREATE TABLE special_offer_product(
-    special_offer_id INT NOT NULL,
-    product_id INT NOT NULL,
-    rowguid uuid NOT NULL CONSTRAINT "df_special_offer_product_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+    special_offer_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    rowguid UUID NOT NULL CONSTRAINT "df_special_offer_product_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_special_offer_product_modified_date" DEFAULT (NOW())
   )
-  CREATE TABLE Store(
-    business_entity_id INT NOT NULL,
-    Name "Name" NOT NULL,
-    sales_person_id INT NULL,
-    demographics varchar NULL, -- XML(sales.store_survey_schema_collection)
-    rowguid uuid NOT NULL CONSTRAINT "df_store_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
+  CREATE TABLE store(
+    business_entity_id INTEGER NOT NULL,
+    name "Name" NOT NULL,
+    sales_person_id INTEGER NULL,
+    demographics VARCHAR NULL, -- XML(sales.store_survey_schema_collection)
+    rowguid UUID NOT NULL CONSTRAINT "df_store_rowguid" DEFAULT (uuid_generate_v1()), -- ROWGUIDCOL
     modified_date TIMESTAMP NOT NULL CONSTRAINT "df_store_modified_date" DEFAULT (NOW())
   );
 
@@ -1713,134 +1713,91 @@ CLUSTER production.work_order_routing USING "pk_work_order_routing_work_order_id
 -- FOREIGN KEYS
 -------------------------------------
 
-ALTER TABLE person.address ADD CONSTRAINT "fk_address_state_province_state_province_id" FOREIGN KEY (state_province_id) REFERENCES person.state_province(state_province_id);
-
-ALTER TABLE production.bill_of_materials ADD CONSTRAINT "fk_bill_of_materials_product_product_assembly_id" FOREIGN KEY (product_assembly_id) REFERENCES production.product(product_id);
-ALTER TABLE production.bill_of_materials ADD CONSTRAINT "fk_bill_of_materials_product_component_id" FOREIGN KEY (component_id) REFERENCES production.product(product_id);
-ALTER TABLE production.bill_of_materials ADD CONSTRAINT "fk_bill_of_materials_unit_measure_unit_measure_code" FOREIGN KEY (unit_measure_code) REFERENCES production.unit_measure(unit_measure_code);
-
-ALTER TABLE person.business_entity_address ADD CONSTRAINT "fk_business_entity_address_address_type_address_type_id" FOREIGN KEY (address_type_id) REFERENCES person.address_type(address_type_id);
-ALTER TABLE person.business_entity_address ADD CONSTRAINT "fk_business_entity_address_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
-
-ALTER TABLE person.business_entity_contact ADD CONSTRAINT "fk_business_entity_contact_person_person_id" FOREIGN KEY (person_id) REFERENCES person.person(business_entity_id);
-ALTER TABLE person.business_entity_contact ADD CONSTRAINT "fk_business_entity_contact_contact_type_contact_type_id" FOREIGN KEY (contact_type_id) REFERENCES person.contact_type(contact_type_id);
-ALTER TABLE person.business_entity_contact ADD CONSTRAINT "fk_business_entity_contact_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
-
-ALTER TABLE sales.country_region_currency ADD CONSTRAINT "fk_country_region_currency_country_region_country_region_code" FOREIGN KEY (country_region_code) REFERENCES person.country_region(country_region_code);
-ALTER TABLE sales.country_region_currency ADD CONSTRAINT "fk_country_region_currency_currency_currency_code" FOREIGN KEY (currency_code) REFERENCES sales.currency(currency_code);
-
-ALTER TABLE sales.currency_rate ADD CONSTRAINT "fk_currency_rate_currency_from_currency_code" FOREIGN KEY (from_currency_code) REFERENCES sales.currency(currency_code);
-ALTER TABLE sales.currency_rate ADD CONSTRAINT "fk_currency_rate_currency_to_currency_code" FOREIGN KEY (to_currency_code) REFERENCES sales.currency(currency_code);
-
-ALTER TABLE sales.customer ADD CONSTRAINT "fk_customer_person_person_id" FOREIGN KEY (person_id) REFERENCES person.Person(business_entity_id);
-ALTER TABLE sales.customer ADD CONSTRAINT "fk_customer_store_store_id" FOREIGN KEY (store_id) REFERENCES sales.store(business_entity_id);
-ALTER TABLE sales.customer ADD CONSTRAINT "fk_customer_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
-
-ALTER TABLE production.document ADD CONSTRAINT "fk_document_employee_owner" FOREIGN KEY (owner) REFERENCES human_resources.employee(business_entity_id);
-
-ALTER TABLE person.email_address ADD CONSTRAINT "fk_email_address_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.person(business_entity_id);
-
 ALTER TABLE human_resources.employee ADD CONSTRAINT "fk_employee_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.person(business_entity_id);
-
 ALTER TABLE human_resources.employee_department_history ADD CONSTRAINT "fk_employee_department_history_department_department_id" FOREIGN KEY (department_id) REFERENCES human_resources.department(department_id);
 ALTER TABLE human_resources.employee_department_history ADD CONSTRAINT "fk_employee_department_history_employee_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES human_resources.employee(business_entity_id);
 ALTER TABLE human_resources.employee_department_history ADD CONSTRAINT "fk_employee_department_history_shift_shift_id" FOREIGN KEY (shift_id) REFERENCES human_resources.shift(shift_id);
-
 ALTER TABLE human_resources.employee_pay_history ADD CONSTRAINT "fk_employee_pay_history_employee_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES human_resources.employee(business_entity_id);
-
 ALTER TABLE human_resources.job_candidate ADD CONSTRAINT "fk_job_candidate_employee_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES human_resources.employee(business_entity_id);
-
+ALTER TABLE person.address ADD CONSTRAINT "fk_address_state_province_state_province_id" FOREIGN KEY (state_province_id) REFERENCES person.state_province(state_province_id);
+ALTER TABLE person.business_entity_address ADD CONSTRAINT "fk_business_entity_address_address_type_address_type_id" FOREIGN KEY (address_type_id) REFERENCES person.address_type(address_type_id);
+ALTER TABLE person.business_entity_address ADD CONSTRAINT "fk_business_entity_address_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
+ALTER TABLE person.business_entity_contact ADD CONSTRAINT "fk_business_entity_contact_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
+ALTER TABLE person.business_entity_contact ADD CONSTRAINT "fk_business_entity_contact_contact_type_contact_type_id" FOREIGN KEY (contact_type_id) REFERENCES person.contact_type(contact_type_id);
+ALTER TABLE person.business_entity_contact ADD CONSTRAINT "fk_business_entity_contact_person_person_id" FOREIGN KEY (person_id) REFERENCES person.person(business_entity_id);
+ALTER TABLE person.email_address ADD CONSTRAINT "fk_email_address_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.person(business_entity_id);
 ALTER TABLE person.password ADD CONSTRAINT "fk_password_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.person(business_entity_id);
-
 ALTER TABLE person.person ADD CONSTRAINT "fk_person_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
-
-ALTER TABLE sales.person_credit_card ADD CONSTRAINT "fk_person_credit_card_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.person(business_entity_id);
-ALTER TABLE sales.person_credit_card ADD CONSTRAINT "fk_person_credit_card_credit_card_credit_card_id" FOREIGN KEY (credit_card_id) REFERENCES sales.credit_card(credit_card_id);
-
 ALTER TABLE person.person_phone ADD CONSTRAINT "fk_person_phone_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.Person(business_entity_id);
 ALTER TABLE person.person_phone ADD CONSTRAINT "fk_person_phone_phone_number_type_phone_number_type_id" FOREIGN KEY (phone_number_type_id) REFERENCES person.phone_number_type(phone_number_type_id);
-
+ALTER TABLE person.state_province ADD CONSTRAINT "fk_state_province_country_region_country_region_code" FOREIGN KEY (country_region_code) REFERENCES person.country_region(country_region_code);
+ALTER TABLE person.state_province ADD CONSTRAINT "fk_state_province_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
+ALTER TABLE production.bill_of_materials ADD CONSTRAINT "fk_bill_of_materials_product_component_id" FOREIGN KEY (component_id) REFERENCES production.product(product_id);
+ALTER TABLE production.bill_of_materials ADD CONSTRAINT "fk_bill_of_materials_product_product_assembly_id" FOREIGN KEY (product_assembly_id) REFERENCES production.product(product_id);
+ALTER TABLE production.bill_of_materials ADD CONSTRAINT "fk_bill_of_materials_unit_measure_unit_measure_code" FOREIGN KEY (unit_measure_code) REFERENCES production.unit_measure(unit_measure_code);
+ALTER TABLE production.document ADD CONSTRAINT "fk_document_employee_owner" FOREIGN KEY (owner) REFERENCES human_resources.employee(business_entity_id);
+ALTER TABLE production.product ADD CONSTRAINT "fk_product_product_subcategory_product_subcategory_id" FOREIGN KEY (product_subcategory_id) REFERENCES production.product_subcategory(product_subcategory_id);
 ALTER TABLE production.product ADD CONSTRAINT "fk_product_unit_measure_size_unit_measure_code" FOREIGN KEY (size_unit_measure_code) REFERENCES production.unit_measure(unit_measure_code);
 ALTER TABLE production.product ADD CONSTRAINT "fk_product_unit_measure_weight_unit_measure_code" FOREIGN KEY (weight_unit_measure_code) REFERENCES production.unit_measure(unit_measure_code);
-ALTER TABLE production.product ADD CONSTRAINT "fk_product_product_subcategory_product_subcategory_id" FOREIGN KEY (product_subcategory_id) REFERENCES production.product_subcategory(product_subcategory_id);
-
 ALTER TABLE production.product_cost_history ADD CONSTRAINT "fk_product_cost_history_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-
 ALTER TABLE production.product_document ADD CONSTRAINT "fk_product_document_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
 ALTER TABLE production.product_inventory ADD CONSTRAINT "fk_product_inventory_location_location_id" FOREIGN KEY (location_id) REFERENCES production.location(location_id);
 ALTER TABLE production.product_inventory ADD CONSTRAINT "fk_product_inventory_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-
 ALTER TABLE production.product_list_price_history ADD CONSTRAINT "fk_product_list_price_history_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-
 ALTER TABLE production.product_model_illustration ADD CONSTRAINT "fk_product_model_illustration_illustration_illustration_id" FOREIGN KEY (illustration_id) REFERENCES production.illustration(illustration_id);
-
-ALTER TABLE production.product_model_product_description_culture ADD CONSTRAINT "fk_product_model_product_description_culture_product_description_pro" FOREIGN KEY (product_description_id) REFERENCES production.product_description(product_description_id);
 ALTER TABLE production.product_model_product_description_culture ADD CONSTRAINT "fk_product_model_product_description_culture_culture_culture_id" FOREIGN KEY (culture_id) REFERENCES production.culture(culture_id);
-
-ALTER TABLE production.product_product_photo ADD CONSTRAINT "fk_product_product_photo_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
+ALTER TABLE production.product_model_product_description_culture ADD CONSTRAINT "fk_product_model_product_description_culture_product_description_pro" FOREIGN KEY (product_description_id) REFERENCES production.product_description(product_description_id);
 ALTER TABLE production.product_product_photo ADD CONSTRAINT "fk_product_product_photo_product_photo_product_photo_id" FOREIGN KEY (product_photo_id) REFERENCES production.product_photo(product_photo_id);
-
+ALTER TABLE production.product_product_photo ADD CONSTRAINT "fk_product_product_photo_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
 ALTER TABLE production.product_review ADD CONSTRAINT "fk_product_review_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-
 ALTER TABLE production.product_subcategory ADD CONSTRAINT "fk_product_subcategory_product_category_product_category_id" FOREIGN KEY (product_category_id) REFERENCES production.product_category(product_category_id);
+ALTER TABLE production.transaction_history ADD CONSTRAINT "fk_transaction_history_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
+ALTER TABLE production.work_order ADD CONSTRAINT "fk_work_order_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
+ALTER TABLE production.work_order ADD CONSTRAINT "fk_work_order_scrap_reason_scrap_reason_id" FOREIGN KEY (scrap_reason_id) REFERENCES production.scrap_reason(scrap_reason_id);
+ALTER TABLE production.work_order_routing ADD CONSTRAINT "fk_work_order_routing_location_location_id" FOREIGN KEY (location_id) REFERENCES production.Location(location_id);
+ALTER TABLE production.work_order_routing ADD CONSTRAINT "fk_work_order_routing_work_order_work_order_id" FOREIGN KEY (work_order_id) REFERENCES production.work_order(work_order_id);
 ALTER TABLE purchasing.product_vendor ADD CONSTRAINT "fk_product_vendor_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
 ALTER TABLE purchasing.product_vendor ADD CONSTRAINT "fk_product_vendor_unit_measure_unit_measure_code" FOREIGN KEY (unit_measure_code) REFERENCES production.unit_measure(unit_measure_code);
 ALTER TABLE purchasing.product_vendor ADD CONSTRAINT "fk_product_vendor_vendor_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES purchasing.vendor(business_entity_id);
-
 ALTER TABLE purchasing.purchase_order_detail ADD CONSTRAINT "fk_purchase_order_detail_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
 ALTER TABLE purchasing.purchase_order_detail ADD CONSTRAINT "fk_purchase_order_detail_purchase_order_header_purchase_order_id" FOREIGN KEY (purchase_order_id) REFERENCES purchasing.purchase_order_header(purchase_order_id);
-
 ALTER TABLE purchasing.purchase_order_header ADD CONSTRAINT "fk_purchase_order_header_employee_employee_id" FOREIGN KEY (employee_id) REFERENCES human_resources.employee(business_entity_id);
-ALTER TABLE purchasing.purchase_order_header ADD CONSTRAINT "fk_purchase_order_header_vendor_vendor_id" FOREIGN KEY (vendor_id) REFERENCES purchasing.vendor(business_entity_id);
 ALTER TABLE purchasing.purchase_order_header ADD CONSTRAINT "fk_purchase_order_header_ship_method_ship_method_id" FOREIGN KEY (ship_method_id) REFERENCES purchasing.ship_method(ship_method_id);
-
+ALTER TABLE purchasing.purchase_order_header ADD CONSTRAINT "fk_purchase_order_header_vendor_vendor_id" FOREIGN KEY (vendor_id) REFERENCES purchasing.vendor(business_entity_id);
+ALTER TABLE purchasing.vendor ADD CONSTRAINT "fk_vendor_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
+ALTER TABLE sales.country_region_currency ADD CONSTRAINT "fk_country_region_currency_country_region_country_region_code" FOREIGN KEY (country_region_code) REFERENCES person.country_region(country_region_code);
+ALTER TABLE sales.country_region_currency ADD CONSTRAINT "fk_country_region_currency_currency_currency_code" FOREIGN KEY (currency_code) REFERENCES sales.currency(currency_code);
+ALTER TABLE sales.currency_rate ADD CONSTRAINT "fk_currency_rate_currency_from_currency_code" FOREIGN KEY (from_currency_code) REFERENCES sales.currency(currency_code);
+ALTER TABLE sales.currency_rate ADD CONSTRAINT "fk_currency_rate_currency_to_currency_code" FOREIGN KEY (to_currency_code) REFERENCES sales.currency(currency_code);
+ALTER TABLE sales.customer ADD CONSTRAINT "fk_customer_person_person_id" FOREIGN KEY (person_id) REFERENCES person.Person(business_entity_id);
+ALTER TABLE sales.customer ADD CONSTRAINT "fk_customer_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
+ALTER TABLE sales.customer ADD CONSTRAINT "fk_customer_store_store_id" FOREIGN KEY (store_id) REFERENCES sales.store(business_entity_id);
+ALTER TABLE sales.person_credit_card ADD CONSTRAINT "fk_person_credit_card_credit_card_credit_card_id" FOREIGN KEY (credit_card_id) REFERENCES sales.credit_card(credit_card_id);
+ALTER TABLE sales.person_credit_card ADD CONSTRAINT "fk_person_credit_card_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.person(business_entity_id);
 ALTER TABLE sales.sales_order_detail ADD CONSTRAINT "fk_sales_order_detail_sales_order_header_sales_order_id" FOREIGN KEY (sales_order_id) REFERENCES sales.sales_order_header(sales_order_id) ON DELETE CASCADE;
 ALTER TABLE sales.sales_order_detail ADD CONSTRAINT "fk_sales_order_detail_special_offer_product_special_offer_id_product_id" FOREIGN KEY (special_offer_id, product_id) REFERENCES sales.special_offer_product(special_offer_id, product_id);
-
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_address_bill_to_address_id" FOREIGN KEY (bill_to_address_id) REFERENCES person.Address(address_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_address_ship_to_address_id" FOREIGN KEY (ship_to_address_id) REFERENCES person.address(address_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_credit_card_credit_card_id" FOREIGN KEY (credit_card_id) REFERENCES sales.credit_card(credit_card_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_currency_rate_currency_rate_id" FOREIGN KEY (currency_rate_id) REFERENCES sales.currency_rate(currency_rate_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_customer_customer_id" FOREIGN KEY (customer_id) REFERENCES sales.customer(customer_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_sales_person_sales_person_id" FOREIGN KEY (sales_person_id) REFERENCES sales.sales_person(business_entity_id);
-ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_ship_method_ship_method_id" FOREIGN KEY (ship_method_id) REFERENCES purchasing.ship_method(ship_method_id);
 ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
-
-ALTER TABLE sales.sales_order_header_sales_reason ADD CONSTRAINT "fk_sales_order_header_sales_reason_sales_reason_sales_reason_id" FOREIGN KEY (sales_reason_id) REFERENCES sales.sales_reason(sales_reason_id);
+ALTER TABLE sales.sales_order_header ADD CONSTRAINT "fk_sales_order_header_ship_method_ship_method_id" FOREIGN KEY (ship_method_id) REFERENCES purchasing.ship_method(ship_method_id);
 ALTER TABLE sales.sales_order_header_sales_reason ADD CONSTRAINT "fk_sales_order_header_sales_reason_sales_order_header_sales_order_id" FOREIGN KEY (sales_order_id) REFERENCES sales.sales_order_header(sales_order_id) ON DELETE CASCADE;
-
+ALTER TABLE sales.sales_order_header_sales_reason ADD CONSTRAINT "fk_sales_order_header_sales_reason_sales_reason_sales_reason_id" FOREIGN KEY (sales_reason_id) REFERENCES sales.sales_reason(sales_reason_id);
 ALTER TABLE sales.sales_person ADD CONSTRAINT "fk_sales_person_employee_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES human_resources.employee(business_entity_id);
 ALTER TABLE sales.sales_person ADD CONSTRAINT "fk_sales_person_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
-
 ALTER TABLE sales.sales_person_quota_history ADD CONSTRAINT "fk_sales_person_quota_history_sales_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES sales.sales_person(business_entity_id);
-
 ALTER TABLE sales.sales_tax_rate ADD CONSTRAINT "fk_sales_tax_rate_state_province_state_province_id" FOREIGN KEY (state_province_id) REFERENCES person.state_province(state_province_id);
-
 ALTER TABLE sales.sales_territory ADD CONSTRAINT "fk_sales_territory_country_region_country_region_code" FOREIGN KEY (country_region_code) REFERENCES person.country_region(country_region_code);
-
 ALTER TABLE sales.sales_territory_history ADD CONSTRAINT "fk_sales_territory_history_sales_person_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES sales.sales_person(business_entity_id);
 ALTER TABLE sales.sales_territory_history ADD CONSTRAINT "fk_sales_territory_history_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
-
 ALTER TABLE sales.shopping_cart_item ADD CONSTRAINT "fk_shopping_cart_item_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-
 ALTER TABLE sales.special_offer_product ADD CONSTRAINT "fk_special_offer_product_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
 ALTER TABLE sales.special_offer_product ADD CONSTRAINT "fk_special_offer_product_special_offer_special_offer_id" FOREIGN KEY (special_offer_id) REFERENCES sales.special_offer(special_offer_id);
-
-ALTER TABLE person.state_province ADD CONSTRAINT "fk_state_province_country_region_country_region_code" FOREIGN KEY (country_region_code) REFERENCES person.country_region(country_region_code);
-ALTER TABLE person.state_province ADD CONSTRAINT "fk_state_province_sales_territory_territory_id" FOREIGN KEY (territory_id) REFERENCES sales.sales_territory(territory_id);
-
 ALTER TABLE sales.store ADD CONSTRAINT "fk_store_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
 ALTER TABLE sales.store ADD CONSTRAINT "fk_store_sales_person_sales_person_id" FOREIGN KEY (sales_person_id) REFERENCES sales.sales_person(business_entity_id);
-
-ALTER TABLE production.transaction_history ADD CONSTRAINT "fk_transaction_history_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-
-ALTER TABLE purchasing.vendor ADD CONSTRAINT "fk_vendor_business_entity_business_entity_id" FOREIGN KEY (business_entity_id) REFERENCES person.business_entity(business_entity_id);
-
-ALTER TABLE production.work_order ADD CONSTRAINT "fk_work_order_product_product_id" FOREIGN KEY (product_id) REFERENCES production.product(product_id);
-ALTER TABLE production.work_order ADD CONSTRAINT "fk_work_order_scrap_reason_scrap_reason_id" FOREIGN KEY (scrap_reason_id) REFERENCES production.scrap_reason(scrap_reason_id);
-
-ALTER TABLE production.work_order_routing ADD CONSTRAINT "fk_work_order_routing_location_location_id" FOREIGN KEY (location_id) REFERENCES production.Location(location_id);
-ALTER TABLE production.work_order_routing ADD CONSTRAINT "fk_work_order_routing_work_order_work_order_id" FOREIGN KEY (work_order_id) REFERENCES production.work_order(work_order_id);
 
 
 -------------------------------------
@@ -1849,309 +1806,298 @@ ALTER TABLE production.work_order_routing ADD CONSTRAINT "fk_work_order_routing_
 
 CREATE VIEW human_resources.v_employee
 AS
-SELECT
-    e.business_entity_id
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,e.job_title
-    ,pp.phone_number
-    ,pnt.name AS phone_number_type
-    ,ea.email_address
-    ,p.email_promotion
-    ,a.address_line1
-    ,a.address_line2
-    ,a.city
-    ,sp.name AS state_province_name
-    ,a.postal_code
-    ,cr.name AS country_region_name
-    ,p.additional_contact_info
+SELECT e.business_entity_id
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , e.job_title
+     , pp.phone_number
+     , pnt.name AS phone_number_type
+     , ea.email_address
+     , p.email_promotion
+     , a.address_line1
+     , a.address_line2
+     , a.city
+     , sp.name AS state_province_name
+     , a.postal_code
+     , cr.name AS country_region_name
+     , p.additional_contact_info
 FROM human_resources.employee e
-  INNER JOIN person.person p
-  ON p.business_entity_id = e.business_entity_id
-    INNER JOIN person.business_entity_address bea
-    ON bea.business_entity_id = e.business_entity_id
-    INNER JOIN person.address a
-    ON a.address_id = bea.address_id
-    INNER JOIN person.state_province sp
-    ON sp.state_province_id = a.state_province_id
-    INNER JOIN person.country_region cr
-    ON cr.country_region_code = sp.country_region_code
-    LEFT OUTER JOIN person.person_phone pp
-    ON pp.business_entity_id = p.business_entity_id
-    LEFT OUTER JOIN person.phone_number_type pnt
-    ON pp.phone_number_type_id = pnt.phone_number_type_id
-    LEFT OUTER JOIN person.email_address ea
-    ON p.business_entity_id = ea.business_entity_id;
+INNER JOIN person.person p
+ON p.business_entity_id = e.business_entity_id
+INNER JOIN person.business_entity_address bea
+ON bea.business_entity_id = e.business_entity_id
+INNER JOIN person.address a
+ON a.address_id = bea.address_id
+INNER JOIN person.state_province sp
+ON sp.state_province_id = a.state_province_id
+INNER JOIN person.country_region cr
+ON cr.country_region_code = sp.country_region_code
+LEFT OUTER JOIN person.person_phone pp
+ON pp.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.phone_number_type pnt
+ON pp.phone_number_type_id = pnt.phone_number_type_id
+LEFT OUTER JOIN person.email_address ea
+ON p.business_entity_id = ea.business_entity_id;
 
 CREATE VIEW human_resources.v_employee_department
 AS
-SELECT
-    e.business_entity_id
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,e.job_title
-    ,d.name AS department
-    ,d.group_name
-    ,edh.start_date
+SELECT e.business_entity_id
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , e.job_title
+     , d.name AS department
+     , d.group_name
+     , edh.start_date
 FROM human_resources.employee e
-  INNER JOIN person.person p
-  ON p.business_entity_id = e.business_entity_id
-    INNER JOIN human_resources.employee_department_history edh
-    ON e.business_entity_id = edh.business_entity_id
-    INNER JOIN human_resources.department d
-    ON edh.department_id = d.department_id
+INNER JOIN person.person p
+ON p.business_entity_id = e.business_entity_id
+INNER JOIN human_resources.employee_department_history edh
+ON e.business_entity_id = edh.business_entity_id
+INNER JOIN human_resources.department d
+ON edh.department_id = d.department_id
 WHERE edh.end_date IS NULL;
 
 CREATE VIEW human_resources.v_employee_department_history
 AS
-SELECT
-    e.business_entity_id
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,s.name AS shift
-    ,d.name AS department
-    ,d.group_name
-    ,edh.start_date
-    ,edh.end_date
+SELECT e.business_entity_id
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , s.name AS shift
+     , d.name AS department
+     , d.group_name
+     , edh.start_date
+     , edh.end_date
 FROM human_resources.employee e
-  INNER JOIN person.person p
-  ON p.business_entity_id = e.business_entity_id
-    INNER JOIN human_resources.employee_department_history edh
-    ON e.business_entity_id = edh.business_entity_id
-    INNER JOIN human_resources.department d
-    ON edh.department_id = d.department_id
-    INNER JOIN human_resources.shift s
-    ON s.shift_id = edh.shift_id;
+INNER JOIN person.person p
+ON p.business_entity_id = e.business_entity_id
+INNER JOIN human_resources.employee_department_history edh
+ON e.business_entity_id = edh.business_entity_id
+INNER JOIN human_resources.department d
+ON edh.department_id = d.department_id
+INNER JOIN human_resources.shift s
+ON s.shift_id = edh.shift_id;
 
 CREATE VIEW sales.v_individual_customer
 AS
-SELECT
-    p.business_entity_id
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,pp.phone_number
-    ,pnt.name AS phone_number_type
-    ,ea.email_address
-    ,p.email_promotion
-    ,at.name AS address_type
-    ,a.address_line1
-    ,a.address_line2
-    ,a.city
-    ,sp.name AS state_province_name
-    ,a.postal_code
-    ,cr.name AS country_region_name
-    ,p.demographics
+SELECT p.business_entity_id
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , pp.phone_number
+     , pnt.name AS phone_number_type
+     , ea.email_address
+     , p.email_promotion
+     , at.name AS address_type
+     , a.address_line1
+     , a.address_line2
+     , a.city
+     , sp.name AS state_province_name
+     , a.postal_code
+     , cr.name AS country_region_name
+     , p.demographics
 FROM person.person p
-    INNER JOIN person.business_entity_address bea
-    ON bea.business_entity_id = p.business_entity_id
-    INNER JOIN person.address a
-    ON a.address_id = bea.address_id
-    INNER JOIN person.state_province sp
-    ON sp.state_province_id = a.state_province_id
-    INNER JOIN person.country_region cr
-    ON cr.country_region_code = sp.country_region_code
-    INNER JOIN person.address_type at
-    ON at.address_type_id = bea.address_type_id
-  INNER JOIN sales.customer c
-  ON c.person_id = p.business_entity_id
-  LEFT OUTER JOIN person.email_address ea
-  ON ea.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.person_phone pp
-  ON pp.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.phone_number_type pnt
-  ON pnt.phone_number_type_id = pp.phone_number_type_id
+INNER JOIN person.business_entity_address bea
+ON bea.business_entity_id = p.business_entity_id
+INNER JOIN person.address a
+ON a.address_id = bea.address_id
+INNER JOIN person.state_province sp
+ON sp.state_province_id = a.state_province_id
+INNER JOIN person.country_region cr
+ON cr.country_region_code = sp.country_region_code
+INNER JOIN person.address_type at
+ON at.address_type_id = bea.address_type_id
+INNER JOIN sales.customer c
+ON c.person_id = p.business_entity_id
+LEFT OUTER JOIN person.email_address ea
+ON ea.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.person_phone pp
+ON pp.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.phone_number_type pnt
+ON pnt.phone_number_type_id = pp.phone_number_type_id
 WHERE c.store_id IS NULL;
 
 CREATE VIEW production.v_product_and_description
 AS
-SELECT
-    p.product_id
-    ,p.name
-    ,pm.name AS product_model
-    ,pmx.culture_id
-    ,pd.description
+SELECT p.product_id
+     , p.name
+     , pm.name AS product_model
+     , pmx.culture_id
+     , pd.description
 FROM production.product p
-    INNER JOIN production.product_model pm
-    ON p.product_model_id = pm.product_model_id
-    INNER JOIN production.product_model_product_description_culture pmx
-    ON pm.product_model_id = pmx.product_model_id
-    INNER JOIN production.product_description pd
-    ON pmx.product_description_id = pd.product_description_id;
+INNER JOIN production.product_model pm
+ON p.product_model_id = pm.product_model_id
+INNER JOIN production.product_model_product_description_culture pmx
+ON pm.product_model_id = pmx.product_model_id
+INNER JOIN production.product_description pd
+ON pmx.product_description_id = pd.product_description_id;
 
 CREATE VIEW sales.v_sales_person
 AS
-SELECT
-    s.business_entity_id
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,e.job_title
-    ,pp.phone_number
-    ,pnt.name AS phone_number_type
-    ,ea.email_address
-    ,p.email_promotion
-    ,a.address_line1
-    ,a.address_line2
-    ,a.city
-    ,sp.name AS state_province_name
-    ,a.postal_code
-    ,cr.name AS country_region_name
-    ,st.name AS territory_name
-    ,st.group AS territory_group
-    ,s.sales_quota
-    ,s.sales_ytd
-    ,s.sales_last_year
+SELECT s.business_entity_id
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , e.job_title
+     , pp.phone_number
+     , pnt.name AS phone_number_type
+     , ea.email_address
+     , p.email_promotion
+     , a.address_line1
+     , a.address_line2
+     , a.city
+     , sp.name AS state_province_name
+     , a.postal_code
+     , cr.name AS country_region_name
+     , st.name AS territory_name
+     , st.group AS territory_group
+     , s.sales_quota
+     , s.sales_ytd
+     , s.sales_last_year
 FROM sales.sales_person s
-    INNER JOIN human_resources.employee e
-    ON e.business_entity_id = s.business_entity_id
-  INNER JOIN person.Person p
-  ON p.business_entity_id = s.business_entity_id
-    INNER JOIN person.business_entity_address bea
-    ON bea.business_entity_id = s.business_entity_id
-    INNER JOIN person.address a
-    ON a.address_id = bea.address_id
-    INNER JOIN person.state_province sp
-    ON sp.state_province_id = a.state_province_id
-    INNER JOIN person.country_region cr
-    ON cr.country_region_code = sp.country_region_code
-    LEFT OUTER JOIN sales.sales_territory st
-    ON st.territory_id = s.territory_id
-  LEFT OUTER JOIN person.email_address ea
-  ON ea.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.person_phone pp
-  ON pp.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.phone_number_type pnt
-  ON pnt.phone_number_type_id = pp.phone_number_type_id;
+INNER JOIN human_resources.employee e
+ON e.business_entity_id = s.business_entity_id
+INNER JOIN person.Person p
+ON p.business_entity_id = s.business_entity_id
+INNER JOIN person.business_entity_address bea
+ON bea.business_entity_id = s.business_entity_id
+INNER JOIN person.address a
+ON a.address_id = bea.address_id
+INNER JOIN person.state_province sp
+ON sp.state_province_id = a.state_province_id
+INNER JOIN person.country_region cr
+ON cr.country_region_code = sp.country_region_code
+LEFT OUTER JOIN sales.sales_territory st
+ON st.territory_id = s.territory_id
+LEFT OUTER JOIN person.email_address ea
+ON ea.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.person_phone pp
+ON pp.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.phone_number_type pnt
+ON pnt.phone_number_type_id = pp.phone_number_type_id;
 
 CREATE VIEW person.v_state_province_country_region
 AS
-SELECT
-    sp.state_province_id
-    ,sp.state_province_code
-    ,sp.is_only_state_province_flag
-    ,sp.name AS state_province_name
-    ,sp.territory_id
-    ,cr.country_region_code
-    ,cr.name AS country_region_name
+SELECT sp.state_province_id
+     , sp.state_province_code
+     , sp.is_only_state_province_flag
+     , sp.name AS state_province_name
+     , sp.territory_id
+     , cr.country_region_code
+     , cr.name AS country_region_name
 FROM person.state_province sp
-    INNER JOIN person.country_region cr
-    ON sp.country_region_code = cr.country_region_code;
+INNER JOIN person.country_region cr
+ON sp.country_region_code = cr.country_region_code;
 
 CREATE VIEW sales.v_store_with_contacts AS
-SELECT
-    s.business_entity_id
-    ,s.name
-    ,ct.name AS contact_type
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,pp.phone_number
-    ,pnt.name AS phone_number_type
-    ,ea.email_address
-    ,p.email_promotion
+SELECT s.business_entity_id
+     , s.name
+     , ct.name AS contact_type
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , pp.phone_number
+     , pnt.name AS phone_number_type
+     , ea.email_address
+     , p.email_promotion
 FROM sales.store s
-    INNER JOIN person.business_entity_contact bec
-    ON bec.business_entity_id = s.business_entity_id
-  INNER JOIN person.contact_type ct
-  ON ct.contact_type_id = bec.contact_type_id
-  INNER JOIN person.person p
-  ON p.business_entity_id = bec.person_id
-  LEFT OUTER JOIN person.email_address ea
-  ON ea.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.person_phone pp
-  ON pp.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.phone_number_type pnt
-  ON pnt.phone_number_type_id = pp.phone_number_type_id;
+INNER JOIN person.business_entity_contact bec
+ON bec.business_entity_id = s.business_entity_id
+INNER JOIN person.contact_type ct
+ON ct.contact_type_id = bec.contact_type_id
+INNER JOIN person.person p
+ON p.business_entity_id = bec.person_id
+LEFT OUTER JOIN person.email_address ea
+ON ea.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.person_phone pp
+ON pp.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.phone_number_type pnt
+ON pnt.phone_number_type_id = pp.phone_number_type_id;
 
 CREATE VIEW sales.v_store_with_addresses AS
-SELECT
-    s.business_entity_id
-    ,s.name
-    ,at.name AS address_type
-    ,a.address_line1
-    ,a.address_line2
-    ,a.city
-    ,sp.name AS state_province_name
-    ,a.postal_code
-    ,cr.name AS country_region_name
+SELECT s.business_entity_id
+     , s.name
+     , at.name AS address_type
+     , a.address_line1
+     , a.address_line2
+     , a.city
+     , sp.name AS state_province_name
+     , a.postal_code
+     , cr.name AS country_region_name
 FROM sales.store s
-    INNER JOIN person.business_entity_address bea
-    ON bea.business_entity_id = s.business_entity_id
-    INNER JOIN person.address a
-    ON a.address_id = bea.address_id
-    INNER JOIN person.state_province sp
-    ON sp.state_province_id = a.state_province_id
-    INNER JOIN person.country_region cr
-    ON cr.country_region_code = sp.country_region_code
-    INNER JOIN person.address_type at
-    ON at.address_type_id = bea.address_type_id;
+INNER JOIN person.business_entity_address bea
+ON bea.business_entity_id = s.business_entity_id
+INNER JOIN person.address a
+ON a.address_id = bea.address_id
+INNER JOIN person.state_province sp
+ON sp.state_province_id = a.state_province_id
+INNER JOIN person.country_region cr
+ON cr.country_region_code = sp.country_region_code
+INNER JOIN person.address_type at
+ON at.address_type_id = bea.address_type_id;
 
 CREATE VIEW purchasing.v_vendor_with_contacts AS
-SELECT
-    v.business_entity_id
-    ,v.name
-    ,ct.name AS contact_type
-    ,p.title
-    ,p.first_name
-    ,p.middle_name
-    ,p.last_name
-    ,p.suffix
-    ,pp.phone_number
-    ,pnt.name AS phone_number_type
-    ,ea.email_address
-    ,p.email_promotion
+SELECT v.business_entity_id
+     , v.name
+     , ct.name AS contact_type
+     , p.title
+     , p.first_name
+     , p.middle_name
+     , p.last_name
+     , p.suffix
+     , pp.phone_number
+     , pnt.name AS phone_number_type
+     , ea.email_address
+     , p.email_promotion
 FROM purchasing.vendor v
-    INNER JOIN person.business_entity_contact bec
-    ON bec.business_entity_id = v.business_entity_id
-  INNER JOIN person.contact_type ct
-  ON ct.contact_type_id = bec.contact_type_id
-  INNER JOIN person.person p
-  ON p.business_entity_id = bec.person_id
-  LEFT OUTER JOIN person.email_address ea
-  ON ea.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.person_phone pp
-  ON pp.business_entity_id = p.business_entity_id
-  LEFT OUTER JOIN person.phone_number_type pnt
-  ON pnt.phone_number_type_id = pp.phone_number_type_id;
+INNER JOIN person.business_entity_contact bec
+ON bec.business_entity_id = v.business_entity_id
+INNER JOIN person.contact_type ct
+ON ct.contact_type_id = bec.contact_type_id
+INNER JOIN person.person p
+ON p.business_entity_id = bec.person_id
+LEFT OUTER JOIN person.email_address ea
+ON ea.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.person_phone pp
+ON pp.business_entity_id = p.business_entity_id
+LEFT OUTER JOIN person.phone_number_type pnt
+ON pnt.phone_number_type_id = pp.phone_number_type_id;
 
 CREATE VIEW purchasing.v_vendor_with_addresses AS
-SELECT
-    v.business_entity_id
-    ,v.name
-    ,at.name AS address_type
-    ,a.address_line1
-    ,a.address_line2
-    ,a.city
-    ,sp.name AS state_province_name
-    ,a.postal_code
-    ,cr.name AS country_region_name
+SELECT v.business_entity_id
+     , v.name
+     , at.name AS address_type
+     , a.address_line1
+     , a.address_line2
+     , a.city
+     , sp.name AS state_province_name
+     , a.postal_code
+     , cr.name AS country_region_name
 FROM purchasing.vendor v
-    INNER JOIN person.business_entity_address bea
-    ON bea.business_entity_id = v.business_entity_id
-    INNER JOIN person.address a
-    ON a.address_id = bea.address_id
-    INNER JOIN person.state_province sp
-    ON sp.state_province_id = a.state_province_id
-    INNER JOIN person.country_region cr
-    ON cr.country_region_code = sp.country_region_code
-    INNER JOIN person.address_type at
-    ON at.address_type_id = bea.address_type_id;
+INNER JOIN person.business_entity_address bea
+ON bea.business_entity_id = v.business_entity_id
+INNER JOIN person.address a
+ON a.address_id = bea.address_id
+INNER JOIN person.state_province sp
+ON sp.state_province_id = a.state_province_id
+INNER JOIN person.country_region cr
+ON cr.country_region_code = sp.country_region_code
+INNER JOIN person.address_type at
+ON at.address_type_id = bea.address_type_id;
 
 -- For indices order test
 CREATE INDEX "idx_country_region_currency_currency_code" ON sales.country_region_currency (currency_code);
