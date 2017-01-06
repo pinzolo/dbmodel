@@ -79,7 +79,7 @@ func readSQLFile(fileName string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	f, err := os.Open(filepath.Join(wd, "test", fileName+".sql"))
+	f, err := os.Open(filepath.Join(wd, "testdata", fileName+".sql"))
 	defer f.Close()
 	if err != nil {
 		return nil, err
