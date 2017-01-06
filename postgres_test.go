@@ -7,42 +7,41 @@ import (
 	"testing"
 )
 
-func TestPostgresDataSourceName(t *testing.T) {
-	p := postgres{}
-	ds := InitDataSource()
+func TestPostgresConnectionString(t *testing.T) {
+	p := newPostgres(InitDataSource())
 	excepted := ""
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
-	ds.User = "postgres"
+	p.ds.User = "postgres"
 	excepted = "user=postgres"
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
-	ds.Password = "12345"
+	p.ds.Password = "12345"
 	excepted = "user=postgres password=12345"
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
-	ds.Host = "localhost"
+	p.ds.Host = "localhost"
 	excepted = "host=localhost user=postgres password=12345"
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
-	ds.Port = 5432
+	p.ds.Port = 5432
 	excepted = "host=localhost port=5432 user=postgres password=12345"
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
-	ds.Database = "sample"
+	p.ds.Database = "sample"
 	excepted = "host=localhost port=5432 user=postgres password=12345 dbname=sample"
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
-	ds.Options["sslmode"] = "disable"
+	p.ds.Options["sslmode"] = "disable"
 	excepted = "host=localhost port=5432 user=postgres password=12345 dbname=sample sslmode=disable"
-	if p.dataSourceName(ds) != excepted {
-		t.Errorf("Postgres#dataSourceName returns invalid value.(expected: %v, actually: %v)", excepted, p.dataSourceName(ds))
+	if p.connStr() != excepted {
+		t.Errorf("ConnectionString was %v, but %v was expected.", excepted, p.connStr())
 	}
 }
 
