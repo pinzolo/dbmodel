@@ -160,13 +160,10 @@ func (c *Client) AllTables(schema string, opt Option) ([]*Table, error) {
 		return nil, err
 	}
 
-	rows, err := c.db.Query(c.provider.AllTablesSQL(), schema)
+	tbls, err := c.loadTables(schema)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	tbls := c.readTables(rows)
 	idxMap, err := c.loadIndicesMap(opt, schema)
 	if err != nil {
 		return nil, err
@@ -183,6 +180,7 @@ func (c *Client) AllTables(schema string, opt Option) ([]*Table, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for _, tbl := range tbls {
 		if opt.Indices {
 			idxs, ok := idxMap[tbl.Name()]
@@ -246,6 +244,16 @@ func (c *Client) readTableNames(rows *sql.Rows) []*Table {
 		tables = append(tables, &t)
 	}
 	return tables
+}
+
+func (c *Client) loadTables(schema string) ([]*Table, error) {
+	rows, err := c.db.Query(c.provider.AllTablesSQL(), schema)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return c.readTables(rows), nil
 }
 
 func (c *Client) readTables(rows *sql.Rows) []*Table {
