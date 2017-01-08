@@ -248,7 +248,7 @@ func loadPostgresAllTablesWithOpt(opt Option) []*Table {
 	defer c.Disconnect()
 	c.Connect()
 
-	tbls, err := c.AllTables("sales", opt)
+	tbls, err := c.AllTables("schm", opt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -260,7 +260,7 @@ func loadPostgresTableWithOpt(opt Option) *Table {
 	defer c.Disconnect()
 	c.Connect()
 
-	tbl, err := c.Table("human_resources", "employee", opt)
+	tbl, err := c.Table("schm", "tbl2", opt)
 	if err != nil {
 		log.Fatal(err)
 	}

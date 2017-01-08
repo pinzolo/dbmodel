@@ -15,7 +15,7 @@ type postgres struct {
 
 // Connect to PostgreSQL.
 func (p postgres) Connect() (*sql.DB, error) {
-	return sql.Open("postgres", p.dataSourceName(p.ds))
+	return sql.Open("postgres", p.connStr())
 }
 
 func (p postgres) AllTableNamesSQL() string {
@@ -558,25 +558,29 @@ GROUP BY 1, 2, 3`
 ORDER BY table_name, constraint_kind, constraint_name`
 }
 
-func (p postgres) dataSourceName(ds DataSource) string {
+func (p postgres) connStr() string {
 	parts := make([]string, 0, 10)
-	if ds.Host != "" {
-		parts = append(parts, "host="+ds.Host)
+	if p.ds.Host != "" {
+		parts = append(parts, "host="+p.ds.Host)
 	}
-	if ds.Port != 0 {
-		parts = append(parts, "port="+strconv.Itoa(ds.Port))
+	if p.ds.Port != 0 {
+		parts = append(parts, "port="+strconv.Itoa(p.ds.Port))
 	}
-	if ds.User != "" {
-		parts = append(parts, "user="+ds.User)
+	if p.ds.User != "" {
+		parts = append(parts, "user="+p.ds.User)
 	}
-	if ds.Password != "" {
-		parts = append(parts, "password="+ds.Password)
+	if p.ds.Password != "" {
+		parts = append(parts, "password="+p.ds.Password)
 	}
-	if ds.Database != "" {
-		parts = append(parts, "dbname="+ds.Database)
+	if p.ds.Database != "" {
+		parts = append(parts, "dbname="+p.ds.Database)
 	}
-	for k, v := range ds.Options {
+	for k, v := range p.ds.Options {
 		parts = append(parts, k+"="+v)
 	}
 	return strings.Join(parts, " ")
+}
+
+func newPostgres(ds DataSource) postgres {
+	return postgres{ds: ds}
 }

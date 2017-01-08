@@ -238,7 +238,7 @@ func (c *Client) preCheck(schema string) error {
 
 func findProvider(ds DataSource) (Provider, error) {
 	if ds.Driver == "postgres" {
-		return postgres{ds: ds}, nil
+		return newPostgres(ds), nil
 	}
 	return nil, ErrInvalidDriver
 }
