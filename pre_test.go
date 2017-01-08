@@ -12,7 +12,11 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	err := createPostgresTestResources()
+	err := dropPostgresTestResources()
+	if err != nil {
+		panic(err)
+	}
+	err = createPostgresTestResources()
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +50,7 @@ func createPostgresTestResources() error {
 }
 
 func createPostgresTestDB() error {
-	db, err := sql.Open("postgres", "host=localhost user=postgres sslmode=disable")
+	db, err := sql.Open("postgres", "host=localhost user=postgres dbname=postgres sslmode=disable")
 	if err != nil {
 		return err
 	}

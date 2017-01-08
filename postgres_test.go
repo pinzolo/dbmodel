@@ -50,24 +50,24 @@ func TestPostgresAllTableNames(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	ts, err := c.AllTableNames("sales")
+	ts, err := c.AllTableNames("schm")
 	if err != nil {
 		t.Error(err)
 	}
-	if len(ts) != 19 {
-		t.Errorf("AllTableNames should return 2 table names. but actual %v", len(ts))
+	if len(ts) != 3 {
+		t.Errorf("AllTableNames should return 3 table names. but actual %v", len(ts))
 		return
 	}
-	if ts[0].Name() != "country_region_currency" {
-		t.Errorf("AllTableNames returns invalid table name. expected 'country_region_currency', but actual '%v'", ts[0].Name())
+	if ts[0].Name() != "tbl1" {
+		t.Errorf("AllTableNames returns invalid table name. expected 'tbl1', but actual '%v'", ts[0].Name())
 	}
 	if ts[0].Comment() != "" {
 		t.Errorf("Table comment is null, Comment() should return empty")
 	}
-	if ts[1].Name() != "credit_card" {
-		t.Errorf("AllTableNames returns invalid table name. expected 'credit_card', but actual '%v'", ts[1].Name())
+	if ts[1].Name() != "tbl2" {
+		t.Errorf("AllTableNames returns invalid table name. expected 'tbl2', but actual '%v'", ts[1].Name())
 	}
-	if ts[1].Comment() != "Customer credit card information." {
+	if ts[1].Comment() != "This is table2" {
 		t.Errorf("AllTableNames should pick up table comment. %#v", ts[1])
 	}
 }
@@ -77,16 +77,16 @@ func TestPostgresAllTableNamesOtherSchema(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	ts, err := c.AllTableNames("person")
+	ts, err := c.AllTableNames("other")
 	if err != nil {
 		t.Error(err)
 	}
-	if len(ts) != 13 {
+	if len(ts) != 1 {
 		t.Errorf("AllTableNames should return 1 table name. but actual %v", len(ts))
 		return
 	}
-	if ts[0].Name() != "address" {
-		t.Errorf("AllTableNames returns invalid table name. expected 'address', but actual '%v'", ts[0].Name())
+	if ts[0].Name() != "tbl_other" {
+		t.Errorf("AllTableNames returns invalid table name. expected 'tbl_other', but actual '%v'", ts[0].Name())
 	}
 }
 
@@ -95,28 +95,43 @@ func TestPostgresTableNames(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	ts, err := c.TableNames("sales", "region")
+	ts, err := c.TableNames("schm", "tbl1")
 	if err != nil {
 		t.Error(err)
 	}
 	if len(ts) != 1 {
-		t.Errorf("TableNames with region should return 1 table names. but actual %v", len(ts))
+		t.Errorf("TableNames with tbl1 should return 1 table name. but actual %v", len(ts))
 		return
 	}
-	if ts[0].Name() != "country_region_currency" {
-		t.Errorf("TableNames returns invalid table name. expected 'country_region_currency', but actual '%v'", ts[0].Name())
+	if ts[0].Name() != "tbl1" {
+		t.Errorf("TableNames returns invalid table name. expected 'tbl1', but actual '%v'", ts[0].Name())
 	}
 	if ts[0].Comment() != "" {
 		t.Errorf("Table comment is null, Comment() should return empty")
 	}
 }
 
-func TestPostgresTableNamesNoResult(t *testing.T) {
+func TestPostgresTableNamesNoResultOnInvalidSchema(t *testing.T) {
 	c := createPostgresClient()
 	defer c.Disconnect()
 	c.Connect()
 
-	ts, err := c.TableNames("sales", "sample")
+	ts, err := c.TableNames("other", "tbl1")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(ts) != 0 {
+		t.Errorf("TableNames should return 0 table name. but actual %v", len(ts))
+		return
+	}
+}
+
+func TestPostgresTableNamesNoResultOnInvalidTalbeName(t *testing.T) {
+	c := createPostgresClient()
+	defer c.Disconnect()
+	c.Connect()
+
+	ts, err := c.TableNames("schm", "sample")
 	if err != nil {
 		t.Error(err)
 	}
@@ -145,7 +160,7 @@ func TestPostgresTableNamesWithoutSchema(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	_, err := c.TableNames("", "region")
+	_, err := c.TableNames("", "tbl1")
 	if err == nil {
 		t.Errorf("Client should raise error when empty schema given.")
 	}
@@ -159,12 +174,12 @@ func TestPostgresTableValid(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	tbl, err := c.Table("production", "location", RequireNone)
+	tbl, err := c.Table("schm", "tbl1", RequireNone)
 	if err != nil {
 		t.Error("Client should not raise error when valid schema and table name given.")
 	}
-	if tbl.Name() != "location" {
-		t.Errorf("Table name is invalid. expected: %v, actual: %v", "location", tbl.Name())
+	if tbl.Name() != "tbl1" {
+		t.Errorf("Table name is invalid. expected: %v, actual: %v", "tbl1", tbl.Name())
 	}
 }
 
@@ -173,7 +188,7 @@ func TestPostgresTableNotFound(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	_, err := c.Table("production", "xxxxx", RequireNone)
+	_, err := c.Table("schm", "xxxxx", RequireNone)
 	if err == nil {
 		t.Error("Client should raise error when given table name not exist")
 	}
@@ -187,7 +202,7 @@ func TestPostgresTableWithoutSchema(t *testing.T) {
 	defer c.Disconnect()
 	c.Connect()
 
-	_, err := c.Table("", "location", RequireNone)
+	_, err := c.Table("", "tbl1", RequireNone)
 	if err == nil {
 		t.Errorf("Client should raise error when empty schema given.")
 	}
@@ -197,666 +212,379 @@ func TestPostgresTableWithoutSchema(t *testing.T) {
 }
 
 func TestPostgresTableColumnsCount(t *testing.T) {
-	tbl := loadPostgresTable("production", "location")
-	if len(tbl.Columns()) != 5 {
-		t.Errorf("Column count is invalid. expected: %v, actual: %v", 5, len(tbl.Columns()))
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if len(tbl.Columns()) != 7 {
+			t.Errorf("Column count is invalid. expected: %v, actual: %v", 7, len(tbl.Columns()))
+		}
 	}
 }
 
 func TestPostgresTableColumnsOrder(t *testing.T) {
-	tbl := loadPostgresTable("production", "location")
-	if actual, expected := tbl.Columns()[0].Name(), "location_id"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].Name(), "name"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[2].Name(), "cost_rate"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[3].Name(), "availability"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[4].Name(), "modified_date"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		colNames := []string{"id", "tbl1_id", "idx_key", "chk"}
+		for i, expected := range colNames {
+			if actual := tbl.Columns()[i].Name(); actual != expected {
+				t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableColumnComment(t *testing.T) {
-	tbl := loadPostgresTable("production", "location")
-	if actual, expected := tbl.Columns()[0].Comment(), "Primary key for location records."; actual != expected {
-		t.Errorf("Cannot get valid comment. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[4].Comment(), ""; actual != expected {
-		t.Errorf("Commnet() should return empty when column comment is NULL. actual: %v", actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		comments := []string{"ID", "tbl1ID", "", ""}
+		for i, expected := range comments {
+			if actual := tbl.Columns()[i].Comment(); actual != expected {
+				t.Errorf("Cannot get valid comment. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableColumnDataType(t *testing.T) {
-	tbl := loadPostgresTable("production", "location")
-	if actual, expected := tbl.Columns()[0].DataType(), "int4"; actual != expected {
-		t.Errorf("Cannot get valid data type. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].DataType(), "public.Name"; actual != expected {
-		t.Errorf("Cannot get valid custom data type. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("other", "tbl_other")
+	for _, tbl := range tbls {
+		dts := []string{"int4", "schm.domain1"}
+		for i, expected := range dts {
+			if actual := tbl.Columns()[i].DataType(); actual != expected {
+				t.Errorf("Cannot get valid data type. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableColumnSize(t *testing.T) {
-	tbl := loadPostgresTable("production", "location")
-	textSize := tbl.Columns()[1].Size()
-	if !textSize.IsValid() || !textSize.Length().Valid || textSize.Precision().Valid {
-		t.Error("Cannot get valid text size.")
-	}
-	if actual, expected := textSize.String(), "50"; actual != expected {
-		t.Errorf("Text size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		textSize := tbl.Columns()[2].Size()
+		if !textSize.IsValid() || !textSize.Length().Valid || textSize.Precision().Valid {
+			t.Error("Cannot get valid text size.")
+		}
+		if actual, expected := textSize.String(), "50"; actual != expected {
+			t.Errorf("Text size value is invalid. expected: %v, actual: %v", expected, actual)
+		}
 
-	nullSize := tbl.Columns()[2].Size()
-	if nullSize.IsValid() {
-		t.Error("Cannot get valid null size.")
-	}
-	if actual, expected := nullSize.String(), ""; actual != expected {
-		t.Errorf("Null size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
+		nullSize := tbl.Columns()[1].Size()
+		if nullSize.IsValid() {
+			t.Error("Cannot get valid null size.")
+		}
+		if actual, expected := nullSize.String(), ""; actual != expected {
+			t.Errorf("Null size value is invalid. expected: %v, actual: %v", expected, actual)
+		}
 
-	intSize := tbl.Columns()[3].Size()
-	if !intSize.IsValid() || intSize.Length().Valid || !intSize.Precision().Valid || !intSize.Scale().Valid {
-		t.Error("Cannot get valid integer size.")
-	}
-	if actual, expected := intSize.String(), "8, 2"; actual != expected {
-		t.Errorf("Integer size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
+		intSize := tbl.Columns()[4].Size()
+		if !intSize.IsValid() || intSize.Length().Valid || !intSize.Precision().Valid || !intSize.Scale().Valid {
+			t.Error("Cannot get valid integer size.")
+		}
+		if actual, expected := intSize.String(), "8, 2"; actual != expected {
+			t.Errorf("Integer size value is invalid. expected: %v, actual: %v", expected, actual)
+		}
 
-	dateSize := tbl.Columns()[4].Size()
-	if !dateSize.IsValid() || dateSize.Length().Valid || !dateSize.Precision().Valid {
-		t.Error("Cannot get valid date size.")
-	}
-	if actual, expected := dateSize.String(), "6"; actual != expected {
-		t.Errorf("Date size value is invalid. expected: %v, actual: %v", expected, actual)
+		dateSize := tbl.Columns()[6].Size()
+		if !dateSize.IsValid() || dateSize.Length().Valid || !dateSize.Precision().Valid {
+			t.Error("Cannot get valid date size.")
+		}
+		if actual, expected := dateSize.String(), "6"; actual != expected {
+			t.Errorf("Date size value is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableColumnNullable(t *testing.T) {
-	tbl := loadPostgresTable("sales", "customer")
-	if tbl.Columns()[0].IsNullable() {
-		t.Errorf("Column '%v' is not nullable, but IsNullable() returns true", tbl.Columns()[0].Name())
-	}
-	if !tbl.Columns()[3].IsNullable() {
-		t.Errorf("Column '%v' is nullable, but IsNullable() returns false", tbl.Columns()[3].Name())
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if tbl.Columns()[0].IsNullable() {
+			t.Errorf("Column '%v' is not nullable, but IsNullable() returns true", tbl.Columns()[0].Name())
+		}
+		if !tbl.Columns()[3].IsNullable() {
+			t.Errorf("Column '%v' is nullable, but IsNullable() returns false", tbl.Columns()[3].Name())
+		}
 	}
 }
 
 func TestPostgresTableColumnDefaultValue(t *testing.T) {
-	tbl := loadPostgresTable("production", "location")
-	if actual := tbl.Columns()[1].DefaultValue(); actual != "" {
-		t.Errorf("Column '%v' do not have default value, but DefaultValue() returns %v", tbl.Columns()[1].Name(), actual)
-	}
-	if actual, expected := tbl.Columns()[2].DefaultValue(), "0.00"; actual != expected {
-		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[2].Name(), expected, actual)
-	}
-	if actual, expected := tbl.Columns()[4].DefaultValue(), "now()"; actual != expected {
-		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[4].Name(), expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if actual := tbl.Columns()[1].DefaultValue(); actual != "" {
+			t.Errorf("Column '%v' do not have default value, but DefaultValue() returns %v", tbl.Columns()[1].Name(), actual)
+		}
+		if actual, expected := tbl.Columns()[5].DefaultValue(), "1"; actual != expected {
+			t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[2].Name(), expected, actual)
+		}
+		if actual, expected := tbl.Columns()[6].DefaultValue(), "now()"; actual != expected {
+			t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[4].Name(), expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableColumnPrimaryKeyPosition(t *testing.T) {
 	// Single column primary key
-	tbl := loadPostgresTable("production", "location")
-	if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(0); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
+			t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+		}
+		if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(0); actual != expected {
+			t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+		}
 	}
 
 	// Multi columns primary key
-	tbl = loadPostgresTable("sales", "country_region_currency")
-	if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(2); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[1].Name(), expected, actual)
+	tbls = loadPostgresTableBy2Way("schm", "tbl3")
+	for _, tbl := range tbls {
+		if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
+			t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
+		}
+		if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(2); actual != expected {
+			t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[1].Name(), expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableIndicesCount(t *testing.T) {
-	tbl := loadPostgresTable("sales", "country_region_currency")
-	if actual, expected := len(tbl.Indices()), 2; actual != expected {
-		t.Errorf("Index count is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		if actual, expected := len(tbl.Indices()), 3; actual != expected {
+			t.Errorf("Index count is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableIndicesOrder(t *testing.T) {
-	tbl := loadPostgresTable("sales", "country_region_currency")
-	if actual, expected := tbl.Indices()[0].Name(), "idx_country_region_currency_currency_code"; actual != expected {
-		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Indices()[1].Name(), "pk_country_region_currency_country_region_code_currency_code"; actual != expected {
-		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		idxNames := []string{"tbl2_ex1", "tbl2_idx1", "tbl2_pkey"}
+		for i, expected := range idxNames {
+			if actual := tbl.Indices()[i].Name(); actual != expected {
+				t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableIndexIsUnique(t *testing.T) {
-	tbl := loadPostgresTable("sales", "country_region_currency")
-	if tbl.Indices()[0].IsUnique() {
-		t.Errorf("Index '%v' is unique, but IsUnique() returns true", tbl.Indices()[0].Name())
-	}
-	if !tbl.Indices()[1].IsUnique() {
-		t.Errorf("Index '%v' is not unique, but IsUnique() returns false", tbl.Indices()[1].Name())
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		if tbl.Indices()[0].IsUnique() {
+			t.Errorf("Index '%v' is unique, but IsUnique() returns true", tbl.Indices()[0].Name())
+		}
+		if tbl.Indices()[1].IsUnique() {
+			t.Errorf("Index '%v' is not unique, but IsUnique() returns false", tbl.Indices()[1].Name())
+		}
+		if !tbl.Indices()[2].IsUnique() {
+			t.Errorf("Index '%v' is not unique, but IsUnique() returns false", tbl.Indices()[1].Name())
+		}
 	}
 }
 
 func TestPostgresTableIndexColumns(t *testing.T) {
-	tbl := loadPostgresTable("sales", "country_region_currency")
-	// count
-	if actual, expected := len(tbl.Indices()[0].Columns()), 1; actual != expected {
-		t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[0].Name(), actual)
-	}
-	if actual, expected := len(tbl.Indices()[1].Columns()), 2; actual != expected {
-		t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[1].Name(), actual)
-	}
-	// order
-	if actual, expected := tbl.Indices()[1].Columns()[0].Name(), "country_region_code"; actual != expected {
-		t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Indices()[1].Columns()[1].Name(), "currency_code"; actual != expected {
-		t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl3")
+	for _, tbl := range tbls {
+		// count
+		if actual, expected := len(tbl.Indices()[0].Columns()), 1; actual != expected {
+			t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[0].Name(), actual)
+		}
+		if actual, expected := len(tbl.Indices()[1].Columns()), 2; actual != expected {
+			t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[1].Name(), actual)
+		}
+		// order
+		if actual, expected := tbl.Indices()[1].Columns()[0].Name(), "tbl1_id"; actual != expected {
+			t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := tbl.Indices()[1].Columns()[1].Name(), "tbl2_id"; actual != expected {
+			t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableForeignKeysCount(t *testing.T) {
-	tbl := loadPostgresTable("sales", "sales_order_detail")
-	if actual, expected := len(tbl.ForeignKeys()), 2; actual != expected {
-		t.Errorf("Foreign key count is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl3")
+	for _, tbl := range tbls {
+		if actual, expected := len(tbl.ForeignKeys()), 2; actual != expected {
+			t.Errorf("Foreign key count is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableForeignKeysOrder(t *testing.T) {
-	tbl := loadPostgresTable("sales", "sales_order_detail")
-	if actual, expected := tbl.ForeignKeys()[0].Name(), "fk_sales_order_detail_sales_order_header_sales_order_id"; actual != expected {
-		t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.ForeignKeys()[1].Name(), "fk_sales_order_detail_special_offer_product_special_offer_id_pr"; actual != expected {
-		t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl3")
+	for _, tbl := range tbls {
+		fkNames := []string{"tbl3_fk1", "tbl3_fk2"}
+		for i, expected := range fkNames {
+			if actual := tbl.ForeignKeys()[i].Name(); actual != expected {
+				t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableForeignKeysColumnCount(t *testing.T) {
-	tbl := loadPostgresTable("sales", "sales_order_detail")
-	if actual, expected := len(tbl.ForeignKeys()[0].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := len(tbl.ForeignKeys()[1].ColumnReferences()), 2; actual != expected {
-		t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("other", "tbl_other")
+	for _, tbl := range tbls {
+		cnts := []int{1, 1, 2}
+		for i, expected := range cnts {
+			if actual := len(tbl.ForeignKeys()[i].ColumnReferences()); actual != expected {
+				t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableForeignKeysColumnReferences(t *testing.T) {
-	tbl := loadPostgresTable("sales", "sales_order_detail")
-	if actual, expected := colRefToString(tbl.ForeignKeys()[0].ColumnReferences()[0]), "sales.sales_order_detail.sales_order_id -> sales.sales_order_header.sales_order_id"; actual != expected {
-		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ForeignKeys()[1].ColumnReferences()[0]), "sales.sales_order_detail.special_offer_id -> sales.special_offer_product.special_offer_id"; actual != expected {
-		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ForeignKeys()[1].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
-		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("other", "tbl_other")
+	for _, tbl := range tbls {
+		if actual, expected := colRefToString(tbl.ForeignKeys()[0].ColumnReferences()[0]), "other.tbl_other.tbl1_id -> schm.tbl1.id"; actual != expected {
+			t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := colRefToString(tbl.ForeignKeys()[2].ColumnReferences()[0]), "other.tbl_other.tbl1_id -> schm.tbl3.tbl1_id"; actual != expected {
+			t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := colRefToString(tbl.ForeignKeys()[2].ColumnReferences()[1]), "other.tbl_other.tbl2_id -> schm.tbl3.tbl2_id"; actual != expected {
+			t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableReferencedKeysCount(t *testing.T) {
-	tbl := loadPostgresTable("person", "country_region")
-	if actual, expected := len(tbl.ReferencedKeys()), 3; actual != expected {
-		t.Errorf("Referenced key count is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if actual, expected := len(tbl.ReferencedKeys()), 3; actual != expected {
+			t.Errorf("Referenced key count is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableReferencedKeysOrder(t *testing.T) {
-	tbl := loadPostgresTable("person", "country_region")
-	if actual, expected := tbl.ReferencedKeys()[0].Name(), "fk_country_region_currency_country_region_country_region_code"; actual != expected {
-		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.ReferencedKeys()[1].Name(), "fk_sales_territory_country_region_country_region_code"; actual != expected {
-		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.ReferencedKeys()[2].Name(), "fk_state_province_country_region_country_region_code"; actual != expected {
-		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		names := []string{"tbl2_fk1", "tbl3_fk1", "tbl_other_fk1"}
+		for i, expected := range names {
+			if actual := tbl.ReferencedKeys()[i].Name(); actual != expected {
+				t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
+			}
+		}
 	}
 }
 
 func TestPostgresTableReferencedKeysColumnCount(t *testing.T) {
-	tbl := loadPostgresTable("person", "country_region")
-	if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 1; actual != expected {
+			t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := len(tbl.ReferencedKeys()[1].ColumnReferences()), 1; actual != expected {
+			t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := len(tbl.ReferencedKeys()[2].ColumnReferences()), 1; actual != expected {
+			t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
-	if actual, expected := len(tbl.ReferencedKeys()[1].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := len(tbl.ReferencedKeys()[2].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	tbl = loadPostgresTable("sales", "special_offer_product")
-	if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 2; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+
+	tbls = loadPostgresTableBy2Way("schm", "tbl3")
+	for _, tbl := range tbls {
+		if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 2; actual != expected {
+			t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableReferencedKeysColumnReferences(t *testing.T) {
-	tbl := loadPostgresTable("person", "country_region")
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "sales.country_region_currency.country_region_code -> person.country_region.country_region_code"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl1")
+	for _, tbl := range tbls {
+		if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "schm.tbl2.tbl1_id -> schm.tbl1.id"; actual != expected {
+			t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := colRefToString(tbl.ReferencedKeys()[1].ColumnReferences()[0]), "schm.tbl3.tbl1_id -> schm.tbl1.id"; actual != expected {
+			t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := colRefToString(tbl.ReferencedKeys()[2].ColumnReferences()[0]), "other.tbl_other.tbl1_id -> schm.tbl1.id"; actual != expected {
+			t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[1].ColumnReferences()[0]), "sales.sales_territory.country_region_code -> person.country_region.country_region_code"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[2].ColumnReferences()[0]), "person.state_province.country_region_code -> person.country_region.country_region_code"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	tbl = loadPostgresTable("sales", "special_offer_product")
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "sales.sales_order_detail.special_offer_id -> sales.special_offer_product.special_offer_id"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+
+	tbls = loadPostgresTableBy2Way("schm", "tbl3")
+	for _, tbl := range tbls {
+		if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "other.tbl_other.tbl1_id -> schm.tbl3.tbl1_id"; actual != expected {
+			t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[1]), "other.tbl_other.tbl2_id -> schm.tbl3.tbl2_id"; actual != expected {
+			t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableConstraitsCount(t *testing.T) {
-	tbl := loadPostgresTable("human_resources", "employee")
-	if len(tbl.Constraints()) != 6 {
-		t.Errorf("Constraint count is invalid. expected: %v, actual: %v", 5, len(tbl.Constraints()))
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		if len(tbl.Constraints()) != 2 {
+			t.Errorf("Constraint count is invalid. expected: %v, actual: %v", 1, len(tbl.Constraints()))
+		}
 	}
 }
 
 func TestPostgresTableConstraitsOrder(t *testing.T) {
-	tbl := loadPostgresTable("production", "document")
-	if actual, expected := tbl.Constraints()[0].Name(), "ck_document_status"; actual != expected {
-		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Constraints()[1].Name(), "document_rowguid_key"; actual != expected {
-		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		if actual, expected := tbl.Constraints()[0].Name(), "tbl2_chk1"; actual != expected {
+			t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := tbl.Constraints()[1].Name(), "tbl2_ex1"; actual != expected {
+			t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableConstraintKind(t *testing.T) {
-	tbl := loadPostgresTable("production", "document")
-	if actual, expected := tbl.Constraints()[0].Kind(), "CHECK"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Constraints()[1].Kind(), "UNIQUE"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		if actual, expected := tbl.Constraints()[0].Kind(), "CHECK"; actual != expected {
+			t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := tbl.Constraints()[1].Kind(), "EXCLUDE"; actual != expected {
+			t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresTableConstraintContent(t *testing.T) {
-	tbl := loadPostgresTable("production", "document")
-	if actual, expected := tbl.Constraints()[0].Content(), "((status >= 1) AND (status <= 3))"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Constraints()[1].Content(), "rowguid"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresTableBy2Way("schm", "tbl2")
+	for _, tbl := range tbls {
+		if actual, expected := tbl.Constraints()[0].Content(), "(chk > 0)"; actual != expected {
+			t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+		}
+		if actual, expected := tbl.Constraints()[1].Content(), "range WITH &&"; actual != expected {
+			t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresAllTableCount(t *testing.T) {
-	tbls := loadPostgresAllTables("sales")
-	if actual, expected := len(tbls), 19; actual != expected {
-		t.Errorf("AllTables returns should be all tables in 'sales' schema. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresAllTables("schm")
+	if actual, expected := len(tbls), 3; actual != expected {
+		t.Errorf("AllTables returns should be all tables in 'schm' schema. expected: %v, actual: %v", expected, actual)
 	}
 }
 
 func TestPostgresAllTablesOrder(t *testing.T) {
-	tbls := loadPostgresAllTables("sales")
-	if actual, expected := tbls[0].Name(), "country_region_currency"; actual != expected {
-		t.Errorf("Table order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbls[12].Name(), "sales_tax_rate"; actual != expected {
-		t.Errorf("Table order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbls[17].Name(), "special_offer_product"; actual != expected {
-		t.Errorf("Table order is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresAllTables("schm")
+	tblNames := []string{"tbl1", "tbl2", "tbl3"}
+	for i, expected := range tblNames {
+		if actual := tbls[i].Name(); actual != expected {
+			t.Errorf("Table order is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
 func TestPostgresAllTablesTableComment(t *testing.T) {
-	tbls := loadPostgresAllTables("sales")
-	if actual, expected := tbls[0].Comment(), ""; actual != expected {
-		t.Errorf("Table comment is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbls[12].Comment(), "Tax rate lookup table."; actual != expected {
-		t.Errorf("Table order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbls[17].Comment(), "Cross-reference table mapping products to special offer discounts."; actual != expected {
-		t.Errorf("Table order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesColumnsOrder(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "location")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	if actual, expected := tbl.Columns()[0].Name(), "location_id"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].Name(), "name"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[2].Name(), "cost_rate"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[3].Name(), "availability"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[4].Name(), "modified_date"; actual != expected {
-		t.Errorf("Column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesColumnComment(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "location")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	if actual, expected := tbl.Columns()[0].Comment(), "Primary key for location records."; actual != expected {
-		t.Errorf("Cannot get valid comment. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[4].Comment(), ""; actual != expected {
-		t.Errorf("Commnet() should return empty when column comment is NULL. actual: %v", actual)
-	}
-}
-
-func TestPostgresAllTablesColumnDataType(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "location")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	if actual, expected := tbl.Columns()[0].DataType(), "int4"; actual != expected {
-		t.Errorf("Cannot get valid data type. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].DataType(), "public.Name"; actual != expected {
-		t.Errorf("Cannot get valid custom data type. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesColumnSize(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "location")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	textSize := tbl.Columns()[1].Size()
-	if !textSize.IsValid() || !textSize.Length().Valid || textSize.Precision().Valid {
-		t.Error("Cannot get valid text size.")
-	}
-	if actual, expected := textSize.String(), "50"; actual != expected {
-		t.Errorf("Text size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
-
-	nullSize := tbl.Columns()[2].Size()
-	if nullSize.IsValid() {
-		t.Error("Cannot get valid null size.")
-	}
-	if actual, expected := nullSize.String(), ""; actual != expected {
-		t.Errorf("Null size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
-
-	intSize := tbl.Columns()[3].Size()
-	if !intSize.IsValid() || intSize.Length().Valid || !intSize.Precision().Valid || !intSize.Scale().Valid {
-		t.Error("Cannot get valid integer size.")
-	}
-	if actual, expected := intSize.String(), "8, 2"; actual != expected {
-		t.Errorf("Integer size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
-
-	dateSize := tbl.Columns()[4].Size()
-	if !dateSize.IsValid() || dateSize.Length().Valid || !dateSize.Precision().Valid {
-		t.Error("Cannot get valid date size.")
-	}
-	if actual, expected := dateSize.String(), "6"; actual != expected {
-		t.Errorf("Date size value is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesColumnNullable(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "customer")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	if tbl.Columns()[0].IsNullable() {
-		t.Errorf("Column '%v' is not nullable, but IsNullable() returns true", tbl.Columns()[0].Name())
-	}
-	if !tbl.Columns()[3].IsNullable() {
-		t.Errorf("Column '%v' is nullable, but IsNullable() returns false", tbl.Columns()[3].Name())
-	}
-}
-
-func TestPostgresAllTablesColumnDefaultValue(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "location")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	if actual := tbl.Columns()[1].DefaultValue(); actual != "" {
-		t.Errorf("Column '%v' do not have default value, but DefaultValue() returns %v", tbl.Columns()[1].Name(), actual)
-	}
-	if actual, expected := tbl.Columns()[2].DefaultValue(), "0.00"; actual != expected {
-		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[2].Name(), expected, actual)
-	}
-	if actual, expected := tbl.Columns()[4].DefaultValue(), "now()"; actual != expected {
-		t.Errorf("Cannot get invalid default value of '%v'. expected: %v, actual: %v", tbl.Columns()[4].Name(), expected, actual)
-	}
-}
-
-func TestPostgresAllTablesColumnPrimaryKeyPosition(t *testing.T) {
-	// Single column primary key
-	tbl := loadPostgresTableByAllTables("production", "location")
-	if tbl == nil {
-		t.Errorf("Table 'location' is not found.")
-		return
-	}
-	if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(0); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
-	}
-
-	// Multi columns primary key
-	tbl = loadPostgresTableByAllTables("sales", "country_region_currency")
-	if tbl == nil {
-		t.Errorf("Table 'country_region_currency' is not found.")
-		return
-	}
-	if actual, expected := tbl.Columns()[0].PrimaryKeyPosition(), int64(1); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[0].Name(), expected, actual)
-	}
-	if actual, expected := tbl.Columns()[1].PrimaryKeyPosition(), int64(2); actual != expected {
-		t.Errorf("Cannot get invalid primary key position of '%v'. expected: %v, actual: %v", tbl.Columns()[1].Name(), expected, actual)
-	}
-}
-
-func TestPostgresAllTablesIndicesCount(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "country_region_currency")
-	if actual, expected := len(tbl.Indices()), 2; actual != expected {
-		t.Errorf("Index count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesIndicesOrder(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "country_region_currency")
-	if actual, expected := tbl.Indices()[0].Name(), "idx_country_region_currency_currency_code"; actual != expected {
-		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Indices()[1].Name(), "pk_country_region_currency_country_region_code_currency_code"; actual != expected {
-		t.Errorf("Index order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesIndexIsUnique(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "country_region_currency")
-	if tbl.Indices()[0].IsUnique() {
-		t.Errorf("Index '%v' is unique, but IsUnique() returns true", tbl.Indices()[0].Name())
-	}
-	if !tbl.Indices()[1].IsUnique() {
-		t.Errorf("Index '%v' is not unique, but IsUnique() returns false", tbl.Indices()[1].Name())
-	}
-}
-
-func TestPostgresAllTablesIndexColumns(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "country_region_currency")
-	// count
-	if actual, expected := len(tbl.Indices()[0].Columns()), 1; actual != expected {
-		t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[0].Name(), actual)
-	}
-	if actual, expected := len(tbl.Indices()[1].Columns()), 2; actual != expected {
-		t.Errorf("Index '%v' should have 1 column, but actually have %v columns.", tbl.Indices()[1].Name(), actual)
-	}
-	// order
-	if actual, expected := tbl.Indices()[1].Columns()[0].Name(), "country_region_code"; actual != expected {
-		t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Indices()[1].Columns()[1].Name(), "currency_code"; actual != expected {
-		t.Errorf("Index column order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesForeignKeysCount(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "sales_order_detail")
-	if actual, expected := len(tbl.ForeignKeys()), 2; actual != expected {
-		t.Errorf("Foreign key count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesForeignKeysOrder(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "sales_order_detail")
-	if actual, expected := tbl.ForeignKeys()[0].Name(), "fk_sales_order_detail_sales_order_header_sales_order_id"; actual != expected {
-		t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.ForeignKeys()[1].Name(), "fk_sales_order_detail_special_offer_product_special_offer_id_pr"; actual != expected {
-		t.Errorf("Foreign key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesForeignKeysColumnCount(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "sales_order_detail")
-	if actual, expected := len(tbl.ForeignKeys()[0].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := len(tbl.ForeignKeys()[1].ColumnReferences()), 2; actual != expected {
-		t.Errorf("Foreign key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesForeignKeysColumnReferences(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("sales", "sales_order_detail")
-	if actual, expected := colRefToString(tbl.ForeignKeys()[0].ColumnReferences()[0]), "sales.sales_order_detail.sales_order_id -> sales.sales_order_header.sales_order_id"; actual != expected {
-		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ForeignKeys()[1].ColumnReferences()[0]), "sales.sales_order_detail.special_offer_id -> sales.special_offer_product.special_offer_id"; actual != expected {
-		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ForeignKeys()[1].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
-		t.Errorf("Foreign key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesReferencedKeysCount(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("person", "country_region")
-	if actual, expected := len(tbl.ReferencedKeys()), 3; actual != expected {
-		t.Errorf("Referenced key count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesReferencedKeysOrder(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("person", "country_region")
-	if actual, expected := tbl.ReferencedKeys()[0].Name(), "fk_country_region_currency_country_region_country_region_code"; actual != expected {
-		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.ReferencedKeys()[1].Name(), "fk_sales_territory_country_region_country_region_code"; actual != expected {
-		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.ReferencedKeys()[2].Name(), "fk_state_province_country_region_country_region_code"; actual != expected {
-		t.Errorf("Referenced key order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesReferencedKeysColumnCount(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("person", "country_region")
-	if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := len(tbl.ReferencedKeys()[1].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := len(tbl.ReferencedKeys()[2].ColumnReferences()), 1; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	tbl = loadPostgresTableByAllTables("sales", "special_offer_product")
-	if actual, expected := len(tbl.ReferencedKeys()[0].ColumnReferences()), 2; actual != expected {
-		t.Errorf("Referenced key's column count is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesReferencedKeysColumnReferences(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("person", "country_region")
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "sales.country_region_currency.country_region_code -> person.country_region.country_region_code"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[1].ColumnReferences()[0]), "sales.sales_territory.country_region_code -> person.country_region.country_region_code"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[2].ColumnReferences()[0]), "person.state_province.country_region_code -> person.country_region.country_region_code"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	tbl = loadPostgresTableByAllTables("sales", "special_offer_product")
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[0]), "sales.sales_order_detail.special_offer_id -> sales.special_offer_product.special_offer_id"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := colRefToString(tbl.ReferencedKeys()[0].ColumnReferences()[1]), "sales.sales_order_detail.product_id -> sales.special_offer_product.product_id"; actual != expected {
-		t.Errorf("Referenced key's column reference is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesConstraitsCount(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("human_resources", "employee")
-	if len(tbl.Constraints()) != 6 {
-		t.Errorf("Constraint count is invalid. expected: %v, actual: %v", 5, len(tbl.Constraints()))
-	}
-}
-
-func TestPostgresAllTablesConstraitsOrder(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "document")
-	if actual, expected := tbl.Constraints()[0].Name(), "ck_document_status"; actual != expected {
-		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Constraints()[1].Name(), "document_rowguid_key"; actual != expected {
-		t.Errorf("Constraint order is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesConstraintKind(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "document")
-	if actual, expected := tbl.Constraints()[0].Kind(), "CHECK"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Constraints()[1].Kind(), "UNIQUE"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
-	}
-}
-
-func TestPostgresAllTablesConstraintContent(t *testing.T) {
-	tbl := loadPostgresTableByAllTables("production", "document")
-	if actual, expected := tbl.Constraints()[0].Content(), "((status >= 1) AND (status <= 3))"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
-	}
-	if actual, expected := tbl.Constraints()[1].Content(), "rowguid"; actual != expected {
-		t.Errorf("Constraint kind is invalid. expected: %v, actual: %v", expected, actual)
+	tbls := loadPostgresAllTables("schm")
+	comments := []string{"", "This is table2", ""}
+	for i, expected := range comments {
+		if actual := tbls[i].Comment(); actual != expected {
+			t.Errorf("Table comment is invalid. expected: %v, actual: %v", expected, actual)
+		}
 	}
 }
 
@@ -866,6 +594,12 @@ func createPostgresClient() *Client {
 
 func createPostgresDataSource(driver string, version string) DataSource {
 	return NewDataSource(driver, version, "localhost", 5432, "postgres", "", "dbmodel_test", map[string]string{"sslmode": "disable"})
+}
+
+func loadPostgresTableBy2Way(schema string, name string) []*Table {
+	tbl1 := loadPostgresTable(schema, name)
+	tbl2 := loadPostgresTableByAllTables(schema, name)
+	return []*Table{tbl1, tbl2}
 }
 
 func loadPostgresTable(schema string, name string) *Table {
