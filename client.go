@@ -167,53 +167,43 @@ func (c *Client) AllTables(schema string, opt Option) ([]*Table, error) {
 	defer rows.Close()
 
 	tbls := c.readTables(rows)
-	tblMap := make(map[string]*Table)
-	for _, tbl := range tbls {
-		tblMap[tbl.Name()] = tbl
+	idxMap, err := c.loadIndicesMap(opt, schema)
+	if err != nil {
+		return nil, err
 	}
-	if opt.Indices {
-		idxMap, err := c.loadIndicesMap(schema)
-		if err != nil {
-			return nil, err
-		}
-		for tblName, idxs := range idxMap {
-			tbl, ok := tblMap[tblName]
+	fkMap, err := c.loadForeignKeysMap(opt, schema)
+	if err != nil {
+		return nil, err
+	}
+	cnsMap, err := c.loadConstraintsMap(opt, schema)
+	if err != nil {
+		return nil, err
+	}
+	rkMap, err := c.loadReferencedKeysMap(opt, schema)
+	if err != nil {
+		return nil, err
+	}
+	for _, tbl := range tbls {
+		if opt.Indices {
+			idxs, ok := idxMap[tbl.Name()]
 			if ok {
 				tbl.indices = idxs
 			}
 		}
-	}
-	if opt.ForeignKeys {
-		fkMap, err := c.loadForeignKeysMap(schema)
-		if err != nil {
-			return nil, err
-		}
-		for tblName, fks := range fkMap {
-			tbl, ok := tblMap[tblName]
+		if opt.ForeignKeys {
+			fks, ok := fkMap[tbl.Name()]
 			if ok {
 				tbl.foreignKeys = fks
 			}
 		}
-	}
-	if opt.ReferencedKeys {
-		rkMap, err := c.loadReferencedKeysMap(schema)
-		if err != nil {
-			return nil, err
-		}
-		for tblName, rks := range rkMap {
-			tbl, ok := tblMap[tblName]
+		if opt.ReferencedKeys {
+			rks, ok := rkMap[tbl.Name()]
 			if ok {
 				tbl.refKeys = rks
 			}
 		}
-	}
-	if opt.Constraints {
-		cnsMap, err := c.loadConstraintsMap(schema)
-		if err != nil {
-			return nil, err
-		}
-		for tblName, cnss := range cnsMap {
-			tbl, ok := tblMap[tblName]
+		if opt.Constraints {
+			cnss, ok := cnsMap[tbl.Name()]
 			if ok {
 				tbl.constraints = cnss
 			}
@@ -305,7 +295,10 @@ func (c *Client) loadIndices(schema string, tblName string) ([]*Index, error) {
 	return c.readIndices(rows), nil
 }
 
-func (c *Client) loadIndicesMap(schema string) (map[string][]*Index, error) {
+func (c *Client) loadIndicesMap(opt Option, schema string) (map[string][]*Index, error) {
+	if !opt.Indices {
+		return nil, nil
+	}
 	rows, err := c.db.Query(c.provider.AllIndicesSQL(), schema)
 	if err != nil {
 		return nil, err
@@ -357,7 +350,10 @@ func (c *Client) loadConstraints(schema string, tblName string) ([]*Constraint, 
 	return c.readConstraints(rows), nil
 }
 
-func (c *Client) loadConstraintsMap(schema string) (map[string][]*Constraint, error) {
+func (c *Client) loadConstraintsMap(opt Option, schema string) (map[string][]*Constraint, error) {
+	if !opt.Constraints {
+		return nil, nil
+	}
 	rows, err := c.db.Query(c.provider.AllConstraintsSQL(), schema)
 	if err != nil {
 		return nil, err
@@ -403,7 +399,10 @@ func (c *Client) loadForeignKeys(schema string, tblName string) ([]*ForeignKey, 
 	return c.readForeignKeys(rows), nil
 }
 
-func (c *Client) loadForeignKeysMap(schema string) (map[string][]*ForeignKey, error) {
+func (c *Client) loadForeignKeysMap(opt Option, schema string) (map[string][]*ForeignKey, error) {
+	if !opt.ForeignKeys {
+		return nil, nil
+	}
 	rows, err := c.db.Query(c.provider.AllForeignKeysSQL(), schema)
 	if err != nil {
 		return nil, err
@@ -463,7 +462,10 @@ func (c *Client) loadReferencedKeys(schema string, tblName string) ([]*ForeignKe
 	return c.readForeignKeys(rows), nil
 }
 
-func (c *Client) loadReferencedKeysMap(schema string) (map[string][]*ForeignKey, error) {
+func (c *Client) loadReferencedKeysMap(opt Option, schema string) (map[string][]*ForeignKey, error) {
+	if !opt.ReferencedKeys {
+		return nil, nil
+	}
 	rows, err := c.db.Query(c.provider.AllReferencedKeysSQL(), schema)
 	if err != nil {
 		return nil, err
