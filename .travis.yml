@@ -10,6 +10,9 @@ go:
   - 1.5
   - 1.6
 
+addons:
+  postgresql: "9.4"
+
 before_install:
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
